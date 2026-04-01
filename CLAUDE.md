@@ -189,6 +189,8 @@ scripts/             ← Entry points only. No business logic.
 
 > Add discoveries during sessions. Never delete — mark as RESOLVED with date.
 
+- `detect-secrets` is not installed in the current Python environment. Run `pip install detect-secrets` then regenerate `.secrets.baseline` with `python -m detect_secrets scan > .secrets.baseline` so the pre-commit hook has an accurate baseline.
+
 <!-- Format: - [OPEN/RESOLVED date] Stage N: description -->
 
 ---

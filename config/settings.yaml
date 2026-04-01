@@ -67,3 +67,13 @@ broker:
   exchange: "NSE"
   product_type: "INTRADAY"
   order_variety: "NORMAL"
+
+# ─── Data ───
+data:
+  cache_dir: "data/historical"
+  logs_dir: "data/logs"
+  reports_dir: "data/reports"
+  historical_intervals:
+    - "5m"
+    - "15m"
+    - "1d"
