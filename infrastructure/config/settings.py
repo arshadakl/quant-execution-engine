@@ -4,12 +4,12 @@ from functools import lru_cache
 from pathlib import Path
 
 import yaml
-from pydantic import Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
-_YAML_PATH = Path("config/settings.yaml")
+_YAML_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "settings.yaml"
 
 
 def _load_yaml() -> dict:
@@ -33,9 +33,7 @@ class BrokerConfig(BaseSettings):
     api_key: str = Field(..., min_length=1)
 
 
-class TradingConfig(BaseSettings):
-    model_config = SettingsConfigDict(extra="ignore")
-
+class TradingConfig(BaseModel):
     mode: str = "paper"
     paper_capital: float = 100000.0
 
@@ -47,9 +45,7 @@ class TradingConfig(BaseSettings):
         return v
 
 
-class RiskConfig(BaseSettings):
-    model_config = SettingsConfigDict(extra="ignore")
-
+class RiskConfig(BaseModel):
     max_capital_usage_percent: float = 60.0
     per_trade_risk_percent: float = 1.5
     max_position_size_percent: float = 15.0
@@ -69,6 +65,10 @@ class RiskConfig(BaseSettings):
 
 
 class Settings:
+    broker: BrokerConfig
+    trading: TradingConfig
+    risk: RiskConfig
+
     def __init__(self) -> None:
         self.broker = BrokerConfig()
         _yaml = _load_yaml()
@@ -78,4 +78,9 @@ class Settings:
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
+    """Return the application settings singleton.
+
+    Cached after first call. Call get_settings.cache_clear() in tests
+    that need a fresh instance with different env vars.
+    """
     return Settings()

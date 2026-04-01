@@ -3,6 +3,14 @@ import pytest
 from pydantic import ValidationError
 
 
+@pytest.fixture(autouse=True)
+def clear_settings_cache():
+    from infrastructure.config.settings import get_settings
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
 def test_broker_config_loads_from_env_vars(monkeypatch):
     monkeypatch.setenv("ANGEL_CLIENT_ID", "test_client")
     monkeypatch.setenv("ANGEL_PASSWORD", "test_pass")
@@ -62,3 +70,15 @@ def test_get_settings_returns_singleton(monkeypatch):
     s1 = get_settings()
     s2 = get_settings()
     assert s1 is s2
+
+
+def test_broker_config_fails_fast_when_env_vars_missing(monkeypatch):
+    """Verifies the actual production failure mode — no env vars set."""
+    monkeypatch.delenv("ANGEL_CLIENT_ID", raising=False)
+    monkeypatch.delenv("ANGEL_PASSWORD", raising=False)
+    monkeypatch.delenv("ANGEL_TOTP_SECRET", raising=False)
+    monkeypatch.delenv("ANGEL_API_KEY", raising=False)
+
+    from infrastructure.config.settings import BrokerConfig
+    with pytest.raises(ValidationError):
+        BrokerConfig(_env_file=None)  # bypass .env file, no env vars — must fail
