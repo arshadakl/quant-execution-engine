@@ -1,0 +1,36 @@
+# Secrets — NEVER commit
+.env
+*.env
+
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data (generated at runtime)
+data/historical/
+data/logs/
+data/reports/
+*.db
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp

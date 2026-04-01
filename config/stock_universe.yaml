@@ -1,0 +1,10 @@
+# NSE equity universe filters
+universe:
+  exchange: "NSE"
+  index_filters:
+    - "NIFTY500"
+  exclude_sectors:
+    - "REALTY"
+
+# Manual overrides — always include these if they pass filters
+watchlist_override: []
