@@ -1,5 +1,4 @@
 """Main entry point — runs the trading bot."""
-import asyncio
 import logging
 from infrastructure.config.settings import get_settings
 

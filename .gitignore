@@ -15,9 +15,12 @@ __pycache__/
 htmlcov/
 
 # Data (generated at runtime)
-data/historical/
-data/logs/
-data/reports/
+data/historical/*
+!data/historical/.gitkeep
+data/logs/*
+!data/logs/.gitkeep
+data/reports/*
+!data/reports/.gitkeep
 *.db
 
 # Virtual environments
