@@ -37,3 +37,33 @@ schedule:
   market_close: "15:30"
   scanner_run: "08:50"
   square_off_check: "15:10"
+
+# ─── Notifications ───
+notifications:
+  enabled: true
+  telegram:
+    enabled: true
+    send_on_entry: true
+    send_on_exit: true
+    send_daily_summary: true
+    daily_summary_time: "15:35"
+
+# ─── Strategies ───
+strategies:
+  active:
+    - "ORB"
+    - "VWAP_REVERSION"
+  orb:
+    opening_range_minutes: 15
+    breakout_buffer_percent: 0.1
+    target_multiplier: 2.0
+  vwap_reversion:
+    deviation_percent: 1.5
+    target_multiplier: 1.5
+
+# ─── Broker ───
+broker:
+  name: "angelone"
+  exchange: "NSE"
+  product_type: "INTRADAY"
+  order_variety: "NORMAL"

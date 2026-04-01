@@ -37,3 +37,11 @@ build/
 .vscode/
 .idea/
 *.swp
+
+# Additional generated files
+*.log
+*.html
+*.parquet
+.mypy_cache/
+.ruff_cache/
+.secrets.baseline.bak
