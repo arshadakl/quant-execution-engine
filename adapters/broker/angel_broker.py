@@ -10,6 +10,7 @@ from typing import Optional
 import pyotp
 from SmartApi import SmartConnect
 
+from adapters.broker.angel_broker_data import AngelBrokerDataMixin
 from infrastructure.config.settings import BrokerConfig
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ _TOKEN_LIFETIME_HOURS = 23
 _REFRESH_BEFORE_MINUTES = 5
 
 
-class AngelBroker:
+class AngelBroker(AngelBrokerDataMixin):
     """Wraps Angel One SmartAPI with async interface and auto token refresh."""
 
     def __init__(self, config: BrokerConfig) -> None:

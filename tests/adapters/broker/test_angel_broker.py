@@ -224,3 +224,170 @@ async def test_logout_clears_tokens(broker_config, mock_smart_session):
         assert broker._refresh_token is None
         assert broker._feed_token is None
         assert broker._token_expiry is None
+
+
+# ─── Data Method Tests ───
+
+@pytest.mark.asyncio
+async def test_get_historical_returns_dataframe(broker_config, mock_smart_session):
+    from datetime import datetime
+    import pandas as pd
+
+    with patch("adapters.broker.angel_broker.SmartConnect") as mock_cls:
+        mock_api = MagicMock()
+        mock_cls.return_value = mock_api
+        mock_api.generateSession.return_value = mock_smart_session
+        mock_api.getCandleData.return_value = {
+            "status": True,
+            "data": [
+                ["2026-01-15T09:15:00+05:30", 2440.0, 2460.0, 2435.0, 2455.0, 100000],
+                ["2026-01-15T09:20:00+05:30", 2455.0, 2470.0, 2450.0, 2465.0, 80000],
+            ],
+        }
+
+        from adapters.broker.angel_broker import AngelBroker
+        broker = AngelBroker(broker_config)
+        await broker.login()
+
+        df = await broker.get_historical(
+            symbol="RELIANCE",
+            token="2885",
+            interval="5m",
+            from_dt=datetime(2026, 1, 15, 9, 15),
+            to_dt=datetime(2026, 1, 15, 15, 30),
+        )
+
+        assert isinstance(df, pd.DataFrame)
+        assert len(df) == 2
+        assert list(df.columns) == ["open", "high", "low", "close", "volume"]
+
+
+@pytest.mark.asyncio
+async def test_get_historical_returns_empty_df_when_no_data(broker_config, mock_smart_session):
+    from datetime import datetime
+    import pandas as pd
+
+    with patch("adapters.broker.angel_broker.SmartConnect") as mock_cls:
+        mock_api = MagicMock()
+        mock_cls.return_value = mock_api
+        mock_api.generateSession.return_value = mock_smart_session
+        mock_api.getCandleData.return_value = {"status": True, "data": []}
+
+        from adapters.broker.angel_broker import AngelBroker
+        broker = AngelBroker(broker_config)
+        await broker.login()
+
+        df = await broker.get_historical(
+            symbol="RELIANCE", token="2885", interval="5m",
+            from_dt=datetime(2026, 1, 15, 9, 15),
+            to_dt=datetime(2026, 1, 15, 15, 30),
+        )
+
+        assert isinstance(df, pd.DataFrame)
+        assert df.empty
+
+
+@pytest.mark.asyncio
+async def test_get_historical_raises_on_invalid_interval(broker_config, mock_smart_session):
+    from datetime import datetime
+
+    with patch("adapters.broker.angel_broker.SmartConnect") as mock_cls:
+        mock_api = MagicMock()
+        mock_cls.return_value = mock_api
+        mock_api.generateSession.return_value = mock_smart_session
+
+        from adapters.broker.angel_broker import AngelBroker
+        broker = AngelBroker(broker_config)
+        await broker.login()
+
+        with pytest.raises(ValueError, match="Unsupported interval"):
+            await broker.get_historical(
+                symbol="RELIANCE", token="2885", interval="2m",
+                from_dt=datetime(2026, 1, 15, 9, 15),
+                to_dt=datetime(2026, 1, 15, 15, 30),
+            )
+
+
+@pytest.mark.asyncio
+async def test_get_funds_returns_dict(broker_config, mock_smart_session):
+    with patch("adapters.broker.angel_broker.SmartConnect") as mock_cls:
+        mock_api = MagicMock()
+        mock_cls.return_value = mock_api
+        mock_api.generateSession.return_value = mock_smart_session
+        mock_api.rmsLimit.return_value = {
+            "status": True,
+            "data": {"availablecash": "95000.00", "utilisedamount": "5000.00"},
+        }
+
+        from adapters.broker.angel_broker import AngelBroker
+        broker = AngelBroker(broker_config)
+        await broker.login()
+        funds = await broker.get_funds()
+
+        assert isinstance(funds, dict)
+        assert "availablecash" in funds
+
+
+@pytest.mark.asyncio
+async def test_get_positions_returns_list(broker_config, mock_smart_session):
+    with patch("adapters.broker.angel_broker.SmartConnect") as mock_cls:
+        mock_api = MagicMock()
+        mock_cls.return_value = mock_api
+        mock_api.generateSession.return_value = mock_smart_session
+        mock_api.position.return_value = {
+            "status": True,
+            "data": [
+                {"tradingsymbol": "RELIANCE", "netqty": "18", "ltp": "2465.00"},
+            ],
+        }
+
+        from adapters.broker.angel_broker import AngelBroker
+        broker = AngelBroker(broker_config)
+        await broker.login()
+        positions = await broker.get_positions()
+
+        assert isinstance(positions, list)
+        assert len(positions) == 1
+
+
+@pytest.mark.asyncio
+async def test_get_orders_returns_list(broker_config, mock_smart_session):
+    with patch("adapters.broker.angel_broker.SmartConnect") as mock_cls:
+        mock_api = MagicMock()
+        mock_cls.return_value = mock_api
+        mock_api.generateSession.return_value = mock_smart_session
+        mock_api.orderBook.return_value = {
+            "status": True,
+            "data": [
+                {"orderid": "111111", "tradingsymbol": "RELIANCE", "status": "COMPLETE"},
+            ],
+        }
+
+        from adapters.broker.angel_broker import AngelBroker
+        broker = AngelBroker(broker_config)
+        await broker.login()
+        orders = await broker.get_orders()
+
+        assert isinstance(orders, list)
+        assert len(orders) == 1
+
+
+@pytest.mark.asyncio
+async def test_get_ltp_returns_dict(broker_config, mock_smart_session):
+    with patch("adapters.broker.angel_broker.SmartConnect") as mock_cls:
+        mock_api = MagicMock()
+        mock_cls.return_value = mock_api
+        mock_api.generateSession.return_value = mock_smart_session
+        mock_api.ltpData.return_value = {
+            "status": True,
+            "data": {"ltp": "2465.50"},
+        }
+
+        from adapters.broker.angel_broker import AngelBroker
+        broker = AngelBroker(broker_config)
+        await broker.login()
+        result = await broker.get_ltp([("NSE", "RELIANCE", "2885")])
+
+        assert isinstance(result, dict)
+        assert "RELIANCE" in result
+        assert result["RELIANCE"] == pytest.approx(2465.50)
