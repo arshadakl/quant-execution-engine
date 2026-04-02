@@ -103,7 +103,7 @@ scripts/             ← Entry points only. No business logic.
 
 | Stage | Branch | Status | Sessions Done | Total Sessions |
 |---|---|---|---|---|
-| 1 — Foundation | `stage-1/foundation` | IN PROGRESS | 3 | 7 |
+| 1 — Foundation | `stage-1/foundation` | IN PROGRESS | 4 | 7 |
 | 2 — Backtesting | `stage-2/backtest` | PENDING | 0 | 10 |
 | 3 — Scanner + Risk | `stage-3/scanner-risk` | PENDING | 0 | 8 |
 | 4 — Execution | `stage-4/execution` | PENDING | 0 | 6 |
@@ -120,7 +120,7 @@ scripts/             ← Entry points only. No business logic.
 | 1 | Project scaffold | root setup | DONE | |
 | 2 | Config loader | infrastructure/config/settings.py | DONE | |
 | 3 | Base entities | core/entities/ | DONE | Signal, Order, Trade, Position + IBroker, IDataFeed interfaces |
-| 4 | Broker auth | adapters/broker/angel_broker.py | PENDING | |
+| 4 | Broker auth | adapters/broker/angel_broker.py | DONE | TOTP login, JWT storage, auto-refresh, relogin fallback |
 | 5 | Broker data | adapters/broker/angel_broker.py | PENDING | |
 | 6 | WebSocket feed | adapters/data/data_feed.py | PENDING | |
 | 7 | Data cacher | adapters/data/data_cacher.py | PENDING | |
@@ -206,8 +206,9 @@ scripts/             ← Entry points only. No business logic.
 -->
 
 ### 2026-04-02
+- Stage 1, Session 4: Broker auth — TOTP login, JWT storage, auto-refresh with relogin fallback — 7 tests, all pass (31 total)
 - Stage 1, Session 3: Base entities + interfaces — Signal, Trade, Order, Position, IBroker, IDataFeed — 11 tests, all pass
-- Next: Broker auth (adapters/broker/angel_broker.py)
+- Next: Broker data methods (adapters/broker/angel_broker.py)
 
 ### 2026-04-01
 - Stage 1, Session 1: Project scaffold — git init, directories, requirements, pre-commit
