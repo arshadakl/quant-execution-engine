@@ -158,3 +158,69 @@ async def test_ensure_authenticated_returns_false_before_login(broker_config):
         # Never logged in — token_expiry is None
         result = await broker.ensure_authenticated()
         assert result is False
+
+
+@pytest.mark.asyncio
+async def test_refresh_stores_new_feed_token(broker_config, mock_smart_session):
+    with patch("adapters.broker.angel_broker.SmartConnect") as mock_cls:
+        mock_api = MagicMock()
+        mock_cls.return_value = mock_api
+        mock_api.generateSession.return_value = mock_smart_session
+        mock_api.generateToken.return_value = {
+            "status": True,
+            "data": {
+                "jwtToken": "Bearer new_jwt",
+                "feedToken": "new_feed_token",
+                "refreshToken": "new_refresh_token",
+            },
+        }
+
+        from adapters.broker.angel_broker import AngelBroker
+        broker = AngelBroker(broker_config)
+        await broker.login()
+        broker._token_expiry = datetime.now() + timedelta(minutes=3)
+        await broker.ensure_authenticated()
+
+        assert broker._jwt_token == "Bearer new_jwt"
+        assert broker._feed_token == "new_feed_token"
+        assert broker._refresh_token == "new_refresh_token"
+
+
+@pytest.mark.asyncio
+async def test_refresh_exception_falls_back_to_relogin(broker_config, mock_smart_session):
+    with patch("adapters.broker.angel_broker.SmartConnect") as mock_cls:
+        mock_api = MagicMock()
+        mock_cls.return_value = mock_api
+        mock_api.generateSession.return_value = mock_smart_session
+        mock_api.generateToken.side_effect = Exception("Network error")
+
+        from adapters.broker.angel_broker import AngelBroker
+        broker = AngelBroker(broker_config)
+        await broker.login()
+        broker._token_expiry = datetime.now() + timedelta(minutes=3)
+        result = await broker.ensure_authenticated()
+
+        assert result is True
+        assert mock_api.generateSession.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_logout_clears_tokens(broker_config, mock_smart_session):
+    with patch("adapters.broker.angel_broker.SmartConnect") as mock_cls:
+        mock_api = MagicMock()
+        mock_cls.return_value = mock_api
+        mock_api.generateSession.return_value = mock_smart_session
+        mock_api.terminateSession.return_value = {"status": True}
+
+        from adapters.broker.angel_broker import AngelBroker
+        broker = AngelBroker(broker_config)
+        await broker.login()
+        assert broker._jwt_token is not None
+
+        result = await broker.logout()
+
+        assert result is True
+        assert broker._jwt_token is None
+        assert broker._refresh_token is None
+        assert broker._feed_token is None
+        assert broker._token_expiry is None
