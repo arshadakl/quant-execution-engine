@@ -2,13 +2,14 @@
 Adapters must implement these. Business logic depends only on these protocols.
 """
 from datetime import datetime
-from typing import Optional, Protocol
+from typing import Any, Optional, Protocol, runtime_checkable
 
 import pandas as pd
 
 from core.entities.order import Order
 
 
+@runtime_checkable
 class IOrderBroker(Protocol):
     """Protocol for placing and managing orders."""
 
@@ -29,7 +30,7 @@ class IOrderBroker(Protocol):
         """Cancel a pending order. Returns True if successful."""
         ...
 
-    async def get_order_status(self, order_id: str) -> dict:
+    async def get_order_status(self, order_id: str) -> dict[str, Any]:
         """Get current status of an order."""
         ...
 
@@ -38,6 +39,7 @@ class IOrderBroker(Protocol):
         ...
 
 
+@runtime_checkable
 class IDataBroker(Protocol):
     """Protocol for fetching market data."""
 
@@ -62,10 +64,10 @@ class IDataBroker(Protocol):
         """
         ...
 
-    async def get_funds(self) -> dict:
+    async def get_funds(self) -> dict[str, Any]:
         """Get account funds and margin details."""
         ...
 
-    async def get_positions(self) -> list:
+    async def get_positions(self) -> list[dict[str, Any]]:
         """Get current open positions from broker."""
         ...

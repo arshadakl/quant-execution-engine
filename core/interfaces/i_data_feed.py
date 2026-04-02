@@ -1,7 +1,8 @@
 """IDataFeed protocol — real-time tick subscription interface."""
-from typing import Callable, Protocol
+from typing import Callable, Protocol, runtime_checkable
 
 
+@runtime_checkable
 class IDataFeed(Protocol):
     """Protocol for real-time market data feed."""
 

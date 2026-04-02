@@ -19,6 +19,16 @@ class Position:
     sl_order_id: Optional[str] = None
     target_order_id: Optional[str] = None
 
+    def __post_init__(self) -> None:
+        if self.direction not in ("LONG", "SHORT"):
+            raise ValueError(
+                f"direction must be 'LONG' or 'SHORT', got {self.direction!r}"
+            )
+        if self.entry_price <= 0:
+            raise ValueError(f"entry_price must be positive, got {self.entry_price}")
+        if self.quantity <= 0:
+            raise ValueError(f"quantity must be positive, got {self.quantity}")
+
     @property
     def unrealized_pnl(self) -> float:
         if self.direction == "LONG":

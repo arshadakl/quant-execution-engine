@@ -38,3 +38,11 @@ class Order:
     status: OrderStatus
     timestamp: datetime
     fill_price: Optional[float] = None
+
+    def __post_init__(self) -> None:
+        if self.quantity <= 0:
+            raise ValueError(f"quantity must be positive, got {self.quantity}")
+        if self.order_type == OrderType.LIMIT and (
+            self.price is None or self.price <= 0
+        ):
+            raise ValueError("LIMIT order must have a positive price")

@@ -29,3 +29,25 @@ class Signal:
             raise ValueError(
                 f"confidence must be between 0 and 1, got {self.confidence}"
             )
+        if self.direction == "LONG":
+            if self.stop_loss >= self.entry_price:
+                raise ValueError(
+                    f"LONG stop_loss ({self.stop_loss}) must be below "
+                    f"entry_price ({self.entry_price})"
+                )
+            if self.target_1 <= self.entry_price:
+                raise ValueError(
+                    f"LONG target_1 ({self.target_1}) must be above "
+                    f"entry_price ({self.entry_price})"
+                )
+        else:  # SHORT
+            if self.stop_loss <= self.entry_price:
+                raise ValueError(
+                    f"SHORT stop_loss ({self.stop_loss}) must be above "
+                    f"entry_price ({self.entry_price})"
+                )
+            if self.target_1 >= self.entry_price:
+                raise ValueError(
+                    f"SHORT target_1 ({self.target_1}) must be below "
+                    f"entry_price ({self.entry_price})"
+                )
