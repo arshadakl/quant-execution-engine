@@ -1,5 +1,5 @@
 """AngelBroker — Angel One SmartAPI adapter.
-Implements IOrderBroker + IDataBroker protocols (data methods added in Task 5).
+Implements IDataBroker protocol. IOrderBroker methods pending (Stage 4).
 Uses asyncio.to_thread for all blocking SDK calls.
 """
 import asyncio

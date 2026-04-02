@@ -260,6 +260,8 @@ async def test_get_historical_returns_dataframe(broker_config, mock_smart_sessio
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 2
         assert list(df.columns) == ["open", "high", "low", "close", "volume"]
+        assert df.index[0] == pd.Timestamp("2026-01-15 09:15:00")
+        assert df.index[1] == pd.Timestamp("2026-01-15 09:20:00")
 
 
 @pytest.mark.asyncio
