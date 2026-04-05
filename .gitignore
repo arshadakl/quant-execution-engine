@@ -1,0 +1,47 @@
+# Secrets — NEVER commit
+.env
+*.env
+
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data (generated at runtime)
+data/historical/*
+!data/historical/.gitkeep
+data/logs/*
+!data/logs/.gitkeep
+data/reports/*
+!data/reports/.gitkeep
+*.db
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Additional generated files
+*.log
+*.html
+*.parquet
+.mypy_cache/
+.ruff_cache/
+.secrets.baseline.bak
