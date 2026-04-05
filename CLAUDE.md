@@ -103,7 +103,7 @@ scripts/             ← Entry points only. No business logic.
 
 | Stage | Branch | Status | Sessions Done | Total Sessions |
 |---|---|---|---|---|
-| 1 — Foundation | `stage-1/foundation` | IN PROGRESS | 6 | 7 |
+| 1 — Foundation | `stage-1/foundation` | COMPLETE | 7 | 7 |
 | 2 — Backtesting | `stage-2/backtest` | PENDING | 0 | 10 |
 | 3 — Scanner + Risk | `stage-3/scanner-risk` | PENDING | 0 | 8 |
 | 4 — Execution | `stage-4/execution` | PENDING | 0 | 6 |
@@ -123,7 +123,7 @@ scripts/             ← Entry points only. No business logic.
 | 4 | Broker auth | adapters/broker/angel_broker.py | DONE | TOTP login, JWT storage, auto-refresh, relogin fallback |
 | 5 | Broker data | adapters/broker/angel_broker_data.py | DONE | Split into mixin (AngelBrokerDataMixin) to keep files under 150 lines |
 | 6 | WebSocket feed | adapters/data/data_feed.py | DONE | SmartWebSocketV2 wrapper; auto-resubscribe on reconnect via _on_open; asyncio.to_thread for blocking SDK calls |
-| 7 | Data cacher | adapters/data/data_cacher.py | PENDING | |
+| 7 | Data cacher | adapters/data/data_cacher.py | DONE | Parquet merge/dedup, atomic writes, path-traversal guard, corrupt-cache recovery, IDataCacher protocol |
 
 ---
 
@@ -205,9 +205,12 @@ scripts/             ← Entry points only. No business logic.
 - Next: what the next session should pick up
 -->
 
+### 2026-04-05
+- Stage 1, Session 7: Data cacher — Parquet merge/dedup, atomic writes, path-traversal guard, corrupt-cache recovery, tz normalization, IDataCacher protocol — 22 new tests, 72 total pass. Stage 1 COMPLETE — ready to merge to main.
+- Next: Merge stage-1/foundation → main, then begin Stage 2 (backtester)
+
 ### 2026-04-02
 - Stage 1, Session 6: WebSocket feed — tick subscription, auto-resubscribe on reconnect — 9 new tests, 50 total pass. Fixed SmartApi import path (SmartApi.smartWebSocketV2 not SmartWebSocketV2).
-- Next: Data cacher (adapters/data/data_cacher.py)
 - Stage 1, Session 5: Broker data methods — get_historical, get_ltp, get_funds, get_positions, get_orders — 7 new tests, 41 total pass. Data methods split into AngelBrokerDataMixin (angel_broker_data.py) to stay under 150 lines.
 - Stage 1, Session 4: Broker auth — TOTP login, JWT storage, auto-refresh with relogin fallback — 7 tests, all pass (31 total)
 - Stage 1, Session 3: Base entities + interfaces — Signal, Trade, Order, Position, IBroker, IDataFeed — 11 tests, all pass
