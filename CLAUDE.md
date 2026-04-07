@@ -104,7 +104,7 @@ scripts/             ← Entry points only. No business logic.
 | Stage | Branch | Status | Sessions Done | Total Sessions |
 |---|---|---|---|---|
 | 1 — Foundation | `stage-1/foundation` | COMPLETE | 7 | 7 |
-| 2 — Backtesting | `stage-2/backtest` | IN PROGRESS | 1 | 10 |
+| 2 — Backtesting | `stage-2/backtest` | IN PROGRESS | 2 | 10 |
 | 3 — Scanner + Risk | `stage-3/scanner-risk` | PENDING | 0 | 8 |
 | 4 — Execution | `stage-4/execution` | PENDING | 0 | 6 |
 | 5 — Deploy | `stage-5/deploy` | PENDING | 0 | 6 |
@@ -132,7 +132,7 @@ scripts/             ← Entry points only. No business logic.
 | # | Module | File | Status | Notes |
 |---|---|---|---|---|
 | 1 | Base strategy protocol | core/interfaces/i_strategy.py | DONE | IStrategy protocol, BaseStrategy ABC, BacktestParams frozen dataclass |
-| 2 | Trade simulator | backtester/trade_simulator.py | PENDING | |
+| 2 | Trade simulator | backtester/trade_simulator.py | DONE | Fill sim (SL/target/EOD exit), Indian charges (STT, GST, stamp, SEBI), SimulatedTrade |
 | 3 | Performance metrics | backtester/metrics.py | PENDING | |
 | 4 | HTML report generator | backtester/report.py | PENDING | |
 | 5 | ORB strategy | strategies/orb.py | PENDING | |
@@ -206,12 +206,13 @@ scripts/             ← Entry points only. No business logic.
 -->
 
 ### 2026-04-07
+- Stage 2, Session 2: Trade simulator — fill sim, Indian charges (STT/GST/stamp/SEBI), SimulatedTrade — 15 new tests, 101 total pass.
 - Stage 2, Session 1: Base strategy protocol — IStrategy protocol, BaseStrategy ABC, BacktestParams — 14 new tests, 86 total pass.
 - Next: Stage 2, Module 2 — Trade simulator (backtester/trade_simulator.py)
 
 ### 2026-04-05
 - Stage 1, Session 7: Data cacher — Parquet merge/dedup, atomic writes, path-traversal guard, corrupt-cache recovery, tz normalization, IDataCacher protocol — 22 new tests, 72 total pass. Stage 1 COMPLETE — ready to merge to main.
-- Next: Stage 2 Module 2 — Trade simulator (backtester/trade_simulator.py)
+- Next: Stage 2 Module 3 — Performance metrics (backtester/metrics.py)
 
 ### 2026-04-02
 - Stage 1, Session 6: WebSocket feed — tick subscription, auto-resubscribe on reconnect — 9 new tests, 50 total pass. Fixed SmartApi import path (SmartApi.smartWebSocketV2 not SmartWebSocketV2).
