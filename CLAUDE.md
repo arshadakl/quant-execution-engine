@@ -104,7 +104,7 @@ scripts/             ← Entry points only. No business logic.
 | Stage | Branch | Status | Sessions Done | Total Sessions |
 |---|---|---|---|---|
 | 1 — Foundation | `stage-1/foundation` | COMPLETE | 7 | 7 |
-| 2 — Backtesting | `stage-2/backtest` | IN PROGRESS | 6 | 10 |
+| 2 — Backtesting | `stage-2/backtest` | IN PROGRESS | 7 | 10 |
 | 3 — Scanner + Risk | `stage-3/scanner-risk` | PENDING | 0 | 8 |
 | 4 — Execution | `stage-4/execution` | PENDING | 0 | 6 |
 | 5 — Deploy | `stage-5/deploy` | PENDING | 0 | 6 |
@@ -137,7 +137,7 @@ scripts/             ← Entry points only. No business logic.
 | 4 | HTML report generator | backtester/report.py | DONE | Plotly equity curve + drawdown + monthly P&L, metrics grid, trade log table |
 | 5 | ORB strategy | strategies/orb.py | DONE | Opening range breakout, buffer, configurable multiplier, one signal per session |
 | 6 | VWAP Reversion | strategies/vwap_reversion.py | DONE | Session VWAP, deviation threshold, fade signal, one per session |
-| 7 | Momentum Breakout | strategies/momentum_breakout.py | PENDING | |
+| 7 | Momentum Breakout | strategies/momentum_breakout.py | DONE | N-bar high/low breakout with volume confirmation, configurable lookback |
 | 8 | EMA Crossover | strategies/ema_crossover.py | PENDING | |
 | 9 | Gap Fill | strategies/gap_fill.py | PENDING | |
 | 10 | Parameter optimizer | backtester/optimizer.py | PENDING | |
@@ -206,6 +206,7 @@ scripts/             ← Entry points only. No business logic.
 -->
 
 ### 2026-04-07
+- Stage 2, Session 7: Momentum Breakout — N-bar high/low, volume filter, 16 new tests, 181 total pass.
 - Stage 2, Session 6: VWAP Reversion — session VWAP, deviation fade, 15 new tests, 165 total pass.
 - Stage 2, Session 5: ORB strategy — opening range breakout, buffer, multiplier, one signal/session — 15 new tests, 150 total pass.
 - Stage 2, Session 4: HTML report — Plotly equity/drawdown/monthly charts, metrics grid, trade log — 11 new tests, 135 total pass.
@@ -216,7 +217,7 @@ scripts/             ← Entry points only. No business logic.
 
 ### 2026-04-05
 - Stage 1, Session 7: Data cacher — Parquet merge/dedup, atomic writes, path-traversal guard, corrupt-cache recovery, tz normalization, IDataCacher protocol — 22 new tests, 72 total pass. Stage 1 COMPLETE — ready to merge to main.
-- Next: Stage 2 Module 7 — Momentum Breakout (strategies/momentum_breakout.py)
+- Next: Stage 2 Module 8 — EMA Crossover (strategies/ema_crossover.py)
 
 ### 2026-04-02
 - Stage 1, Session 6: WebSocket feed — tick subscription, auto-resubscribe on reconnect — 9 new tests, 50 total pass. Fixed SmartApi import path (SmartApi.smartWebSocketV2 not SmartWebSocketV2).
