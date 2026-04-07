@@ -104,7 +104,7 @@ scripts/             ← Entry points only. No business logic.
 | Stage | Branch | Status | Sessions Done | Total Sessions |
 |---|---|---|---|---|
 | 1 — Foundation | `stage-1/foundation` | COMPLETE | 7 | 7 |
-| 2 — Backtesting | `stage-2/backtest` | IN PROGRESS | 9 | 10 |
+| 2 — Backtesting | `stage-2/backtest` | COMPLETE | 10 | 10 |
 | 3 — Scanner + Risk | `stage-3/scanner-risk` | PENDING | 0 | 8 |
 | 4 — Execution | `stage-4/execution` | PENDING | 0 | 6 |
 | 5 — Deploy | `stage-5/deploy` | PENDING | 0 | 6 |
@@ -140,7 +140,7 @@ scripts/             ← Entry points only. No business logic.
 | 7 | Momentum Breakout | strategies/momentum_breakout.py | DONE | N-bar high/low breakout with volume confirmation, configurable lookback |
 | 8 | EMA Crossover | strategies/ema_crossover.py | DONE | 9/21 EMA, strict crossover detection, SL=slow EMA, configurable multiplier |
 | 9 | Gap Fill | strategies/gap_fill.py | DONE | Day-boundary gap detection, fade to prev_close, configurable threshold + SL multiplier |
-| 10 | Parameter optimizer | backtester/optimizer.py | PENDING | |
+| 10 | Parameter optimizer | backtester/optimizer.py | DONE | Grid search, run_backtest pipeline, OptimizationResult, configurable optimize_for |
 
 ---
 
@@ -206,6 +206,7 @@ scripts/             ← Entry points only. No business logic.
 -->
 
 ### 2026-04-07
+- Stage 2, Session 10: Parameter optimizer — grid search, run_backtest pipeline, inf-safe sort — 11 new tests, 228 total pass. Stage 2 COMPLETE.
 - Stage 2, Session 9: Gap Fill — day-boundary gap detection, fade to prev_close — 17 new tests, 217 total pass.
 - Stage 2, Session 8: EMA Crossover — 9/21 strict crossover, strict comparison fix for EMA init equality — 19 new tests, 200 total pass.
 - Stage 2, Session 7: Momentum Breakout — N-bar high/low, volume filter, 16 new tests, 181 total pass.
@@ -219,7 +220,7 @@ scripts/             ← Entry points only. No business logic.
 
 ### 2026-04-05
 - Stage 1, Session 7: Data cacher — Parquet merge/dedup, atomic writes, path-traversal guard, corrupt-cache recovery, tz normalization, IDataCacher protocol — 22 new tests, 72 total pass. Stage 1 COMPLETE — ready to merge to main.
-- Next: Stage 2 Module 10 — Parameter optimizer (backtester/optimizer.py)
+- Next: Merge stage-2/backtest → main, then begin Stage 3 (scanner + risk)
 
 ### 2026-04-02
 - Stage 1, Session 6: WebSocket feed — tick subscription, auto-resubscribe on reconnect — 9 new tests, 50 total pass. Fixed SmartApi import path (SmartApi.smartWebSocketV2 not SmartWebSocketV2).
