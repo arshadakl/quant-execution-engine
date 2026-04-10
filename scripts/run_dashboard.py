@@ -1,4 +1,9 @@
 """Dev launcher for the AlgoTrader web dashboard."""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 import uvicorn
 from infrastructure.dashboard.web_ui import create_app
 
@@ -10,6 +15,6 @@ PORT = 8000
 app = create_app(api_token=API_TOKEN)
 
 if __name__ == "__main__":
-    print(f"\n  ALGO TERMINAL  →  http://{HOST}:{PORT}")
+    print(f"\n  ALGO TERMINAL  >>  http://{HOST}:{PORT}")
     print(f"  Token: {API_TOKEN}\n")
     uvicorn.run(app, host=HOST, port=PORT, reload=False)
