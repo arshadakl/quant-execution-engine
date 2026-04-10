@@ -106,7 +106,7 @@ scripts/             ← Entry points only. No business logic.
 | 1 — Foundation | `stage-1/foundation` | COMPLETE | 7 | 7 |
 | 2 — Backtesting | `stage-2/backtest` | COMPLETE | 10 | 10 |
 | 3 — Scanner + Risk | `stage-3/scanner-risk` | COMPLETE | 8 | 8 |
-| 4 — Execution | `stage-4/execution` | PENDING | 0 | 6 |
+| 4 — Execution | `stage-4/execution` | COMPLETE | 6 | 6 |
 | 5 — Deploy | `stage-5/deploy` | PENDING | 0 | 6 |
 
 **Total:** ~37 sessions across 5 stages.
@@ -163,12 +163,12 @@ scripts/             ← Entry points only. No business logic.
 
 | # | Module | File | Status | Notes |
 |---|---|---|---|---|
-| 1 | Strategy engine | core/use_cases/strategy_engine.py | PENDING | |
-| 2 | Paper trader | adapters/paper_trader.py | PENDING | |
-| 3 | Live execution | adapters/broker/execution_engine.py | PENDING | |
-| 4 | Square-off manager | core/use_cases/square_off_manager.py | PENDING | |
-| 5 | Scheduler | infrastructure/scheduler/jobs.py | PENDING | |
-| 6 | Terminal dashboard | infrastructure/dashboard/terminal_ui.py | PENDING | |
+| 1 | Strategy engine | core/use_cases/strategy_engine.py | DONE | multi-strategy runner, per-strategy enable/disable, error isolation |
+| 2 | Paper trader | adapters/paper_trader.py | DONE | SQLite journal, fill/close, day P&L, open trades — tmp_path fix for Windows |
+| 3 | Live execution | adapters/broker/execution_engine.py | DONE | async place_entry, place_sl_order, cancel, fill monitor |
+| 4 | Square-off manager | core/use_cases/square_off_manager.py | DONE | 15:10 cutoff, force close all via LTP, entry_price fallback |
+| 5 | Scheduler | infrastructure/scheduler/jobs.py | DONE | APScheduler cron/interval, scanner/strategy/square-off/report jobs |
+| 6 | Terminal dashboard | infrastructure/dashboard/terminal_ui.py | DONE | Rich tables: positions, signals, summary — returns string for testing |
 
 ---
 
@@ -204,6 +204,16 @@ scripts/             ← Entry points only. No business logic.
 - Stage N, Session M: what was built
 - Next: what the next session should pick up
 -->
+
+### 2026-04-10 (continued)
+- Stage 4, Sessions 1-6: Execution — all 6 modules complete. 69 new tests, 412 total pass. Stage 4 COMPLETE.
+  - Strategy engine: multi-strategy runner, error isolation per strategy
+  - Paper trader: SQLite journal, fill/close/day P&L (Windows tmp_path fix for SQLite file lock)
+  - Execution engine: async order placement, SL order, cancel, fill monitor
+  - Square-off manager: 15:10 cutoff, LTP/entry fallback force close
+  - Scheduler: APScheduler cron+interval for all 4 job types
+  - Terminal dashboard: Rich tables (positions/signals/summary), string output for testability
+- Next: Merge stage-4/execution → main, then begin Stage 5 (Deploy)
 
 ### 2026-04-10
 - Stage 3, Sessions 1-8: Scanner + Risk — all 8 modules complete in one session. 115 new tests, 343 total pass. Stage 3 COMPLETE.
