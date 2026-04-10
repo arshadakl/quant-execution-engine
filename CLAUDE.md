@@ -105,7 +105,7 @@ scripts/             ← Entry points only. No business logic.
 |---|---|---|---|---|
 | 1 — Foundation | `stage-1/foundation` | COMPLETE | 7 | 7 |
 | 2 — Backtesting | `stage-2/backtest` | COMPLETE | 10 | 10 |
-| 3 — Scanner + Risk | `stage-3/scanner-risk` | PENDING | 0 | 8 |
+| 3 — Scanner + Risk | `stage-3/scanner-risk` | COMPLETE | 8 | 8 |
 | 4 — Execution | `stage-4/execution` | PENDING | 0 | 6 |
 | 5 — Deploy | `stage-5/deploy` | PENDING | 0 | 6 |
 
@@ -148,14 +148,14 @@ scripts/             ← Entry points only. No business logic.
 
 | # | Module | File | Status | Notes |
 |---|---|---|---|---|
-| 1 | Liquidity filter | adapters/scanner/filters/liquidity.py | PENDING | |
-| 2 | Volatility filter | adapters/scanner/filters/volatility.py | PENDING | |
-| 3 | Technical filter | adapters/scanner/filters/technical.py | PENDING | |
-| 4 | Pre-market signals | adapters/scanner/filters/premarket.py | PENDING | |
-| 5 | Scanner ranker | adapters/scanner/scanner.py | PENDING | |
-| 6 | Position sizer | core/use_cases/position_sizer.py | PENDING | |
-| 7 | Risk validator | core/use_cases/risk_manager.py | PENDING | |
-| 8 | Portfolio tracker | core/use_cases/portfolio_tracker.py | PENDING | |
+| 1 | Liquidity filter | adapters/scanner/filters/liquidity.py | DONE | avg_vol >= 5L, avg_turnover >= 10Cr |
+| 2 | Volatility filter | adapters/scanner/filters/volatility.py | DONE | ATR(14) > 1.5%, price ₹100–5000 |
+| 3 | Technical filter | adapters/scanner/filters/technical.py | DONE | RSI 30-70, EMA9/21/50 proximity 3%, VWAP proximity 3% |
+| 4 | Pre-market signals | adapters/scanner/filters/premarket.py | DONE | gap > 0.5%, volume spike >= 1.5x |
+| 5 | Scanner ranker | adapters/scanner/scanner.py | DONE | filter pipeline, vol*ATR% composite score, max-15 |
+| 6 | Position sizer | core/use_cases/position_sizer.py | DONE | risk_pct/sl_distance, max_qty cap, floor division |
+| 7 | Risk validator | core/use_cases/risk_manager.py | DONE | kill switch, daily loss, time gate, position cap, cooldown |
+| 8 | Portfolio tracker | core/use_cases/portfolio_tracker.py | DONE | cash, positions, day P&L, equity mark-to-market, drawdown |
 
 ---
 
@@ -204,6 +204,18 @@ scripts/             ← Entry points only. No business logic.
 - Stage N, Session M: what was built
 - Next: what the next session should pick up
 -->
+
+### 2026-04-10
+- Stage 3, Sessions 1-8: Scanner + Risk — all 8 modules complete in one session. 115 new tests, 343 total pass. Stage 3 COMPLETE.
+  - Liquidity filter: avg_vol/turnover thresholds (numpy bool → bool fix)
+  - Volatility filter: Wilder ATR via EWM, price range gate
+  - Technical filter: Wilder RSI (0/0→50 edge case), EMA9/21/50, VWAP proximity
+  - Pre-market filter: signed gap%, volume spike multiplier
+  - Scanner ranker: filter pipeline + vol*ATR% composite score, max-15 cap
+  - Position sizer: floor(risk_amount / sl_distance), max_qty cap
+  - Risk manager: kill switch, daily loss limit, time gate, position cap, cooldown
+  - Portfolio tracker: cash, open positions, day P&L, equity, drawdown
+- Next: Merge stage-3/scanner-risk → main, then begin Stage 4 (Execution)
 
 ### 2026-04-07
 - Stage 2, Session 10: Parameter optimizer — grid search, run_backtest pipeline, inf-safe sort — 11 new tests, 228 total pass. Stage 2 COMPLETE.
