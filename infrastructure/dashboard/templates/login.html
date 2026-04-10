@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALGO TERMINAL — LOGIN</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+  tailwind.config = {
+    theme: { extend: {
+      colors: {
+        bg:      '#080705',
+        bg1:     '#0F0D0A',
+        amber:   '#E8A020',
+        'amber-d': '#A86D10',
+        gain:    '#06D6A0',
+        loss:    '#EF476F',
+        snow:    '#F0EDE8',
+        ink:     '#A09880',
+        'ink-d': '#504840',
+        line:    '#1E1C18',
+        line2:   '#2E2C28',
+      },
+      fontFamily: {
+        display: ['"Bebas Neue"', 'sans-serif'],
+        mono:    ['"IBM Plex Mono"', 'monospace'],
+      },
+      keyframes: {
+        flicker: {
+          '0%,100%': { opacity: '1' },
+          '92%':     { opacity: '1' },
+          '93%':     { opacity: '0.85' },
+          '94%':     { opacity: '1' },
+          '96%':     { opacity: '0.9' },
+          '97%':     { opacity: '1' },
+        },
+        blink: {
+          '0%,49%': { opacity: '1' },
+          '50%,100%': { opacity: '0' },
+        },
+      },
+      animation: {
+        flicker: 'flicker 8s infinite',
+        blink:   'blink 1s step-end infinite',
+      },
+    }}
+  }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body::before {
+      content: "";
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px);
+      pointer-events: none; z-index: 50;
+    }
+  </style>
+</head>
+<body class="bg-bg font-mono text-ink min-h-screen flex flex-col items-center justify-center animate-flicker">
+
+  <!-- header bar -->
+  <div class="w-full max-w-sm mb-8 flex items-baseline gap-3">
+    <span class="font-display text-4xl text-amber tracking-widest">ALGO</span>
+    <span class="text-[10px] tracking-[0.35em] text-ink-d uppercase">TERMINAL v1.0</span>
+  </div>
+
+  <!-- login card -->
+  <div class="w-full max-w-sm border border-line bg-bg1 p-8">
+
+    <div class="mb-6">
+      <div class="text-[9px] tracking-[0.35em] text-amber-d uppercase mb-1">Authentication Required</div>
+      <div class="text-[11px] text-ink-d">Enter your API token to access the trading dashboard.</div>
+    </div>
+
+    {% if error %}
+    <div class="mb-4 px-4 py-2.5 border border-loss/40 bg-loss/10 text-loss text-[11px] tracking-[0.05em]">
+      ✗ {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/login" class="flex flex-col gap-4">
+      <div>
+        <label class="block text-[9px] tracking-[0.3em] text-ink-d uppercase mb-2">API Token</label>
+        <input
+          type="password"
+          name="token"
+          autofocus
+          autocomplete="current-password"
+          placeholder="••••••••••••••••"
+          class="w-full bg-bg border border-line2 text-snow text-[12px] px-4 py-2.5 outline-none
+                 focus:border-amber/50 focus:ring-1 focus:ring-amber/20 transition-colors duration-150
+                 placeholder:text-ink-d font-mono tracking-[0.1em]"
+        >
+      </div>
+
+      <button
+        type="submit"
+        class="mt-2 w-full bg-amber/10 border border-amber/40 text-amber text-[11px] tracking-[0.3em]
+               uppercase py-2.5 hover:bg-amber/20 hover:border-amber/70 transition-colors duration-150
+               font-semibold"
+      >
+        AUTHENTICATE<span class="animate-blink">_</span>
+      </button>
+    </form>
+  </div>
+
+  <!-- footer -->
+  <div class="w-full max-w-sm mt-4 flex justify-between text-[9px] tracking-[0.2em] text-ink-d uppercase">
+    <span>NSE · BSE · INTRADAY</span>
+    <span>ANGEL ONE API</span>
+  </div>
+
+</body>
+</html>
