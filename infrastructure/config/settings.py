@@ -89,9 +89,11 @@ def get_settings() -> Settings:
 _TOKENS_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "symbol_tokens.yaml"
 
 
+@lru_cache(maxsize=1)
 def get_symbol_tokens() -> dict[str, str]:
     """Return {tradingsymbol: token_str} mapping from symbol_tokens.yaml."""
     if not _TOKENS_PATH.exists():
+        logger.warning("symbol_tokens.yaml not found at %s", _TOKENS_PATH)
         return {}
     with open(_TOKENS_PATH) as f:
         data = yaml.safe_load(f) or {}
