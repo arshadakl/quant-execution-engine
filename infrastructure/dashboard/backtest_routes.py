@@ -82,7 +82,7 @@ def create_backtest_router(auth_dep, bot_ref: list) -> APIRouter:
                 hour=23, minute=59
             )
             df = await bot.broker.get_historical(
-                symbol, token, "ONE_DAY", from_dt, to_dt
+                symbol, token, "1d", from_dt, to_dt
             )
             if df.empty or len(df) < 5:
                 ctx["error"] = "Not enough data returned for that date range"
@@ -92,7 +92,7 @@ def create_backtest_router(auth_dep, bot_ref: list) -> APIRouter:
 
             strategy_cls = _STRATEGY_MAP.get(strategy, ORBStrategy)
             params = BacktestParams(
-                symbol=symbol, token=token, interval="ONE_DAY",
+                symbol=symbol, token=token, interval="1d",
                 from_dt=from_dt, to_dt=to_dt,
             )
             trades, metrics = run_backtest(strategy_cls(), df, params, qty=qty)
