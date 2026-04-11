@@ -33,6 +33,28 @@ _STRATEGY_MAP = {
 }
 
 
+async def _fetch_and_run(
+    broker,
+    symbol: str,
+    token: str,
+    strategy_name: str,
+    from_date: str,
+    to_date: str,
+    qty: int,
+) -> dict:
+    from_dt = datetime.strptime(from_date, "%Y-%m-%d")
+    to_dt = datetime.strptime(to_date, "%Y-%m-%d").replace(hour=23, minute=59)
+    if from_dt >= to_dt:
+        return {"error": "from_date must be before to_date"}
+    df = await broker.get_historical(symbol, token, "1d", from_dt, to_dt)
+    if df.empty or len(df) < 5:
+        return {"error": "Not enough data returned for that date range"}
+    strategy_cls = _STRATEGY_MAP[strategy_name]
+    params = BacktestParams(symbol=symbol, token=token, interval="1d", from_dt=from_dt, to_dt=to_dt)
+    trades, metrics = run_backtest(strategy_cls(), df, params, qty=qty)
+    return {"metrics": metrics, "trades": trades}
+
+
 def create_backtest_router(auth_dep, bot_ref: list) -> APIRouter:
     """Return APIRouter for backtest routes.
 
@@ -42,6 +64,10 @@ def create_backtest_router(auth_dep, bot_ref: list) -> APIRouter:
     router = APIRouter()
     templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
     symbols = list(get_symbol_tokens().keys())
+    _RESULTS = "partials/backtest_results.html"
+
+    def _tmpl(req, ctx):
+        return templates.TemplateResponse(req, _RESULTS, ctx)
 
     @router.get("/backtest", response_class=HTMLResponse)
     async def backtest_page(request: Request, _: None = Depends(auth_dep)):
@@ -62,48 +88,21 @@ def create_backtest_router(auth_dep, bot_ref: list) -> APIRouter:
     ):
         bot: "TradingBot | None" = bot_ref[0]
         ctx: dict = {"symbol": symbol, "strategy": strategy}
-
         if bot is None:
             ctx["error"] = "Broker not available -- bot not running"
-            return templates.TemplateResponse(
-                request, "partials/backtest_results.html", ctx
-            )
-
+            return _tmpl(request, ctx)
         token = get_symbol_tokens().get(symbol)
         if not token:
             ctx["error"] = f"Unknown symbol: {symbol}"
-            return templates.TemplateResponse(
-                request, "partials/backtest_results.html", ctx
-            )
-
+            return _tmpl(request, ctx)
+        if strategy not in _STRATEGY_MAP:
+            ctx["error"] = f"Unknown strategy: {strategy}"
+            return _tmpl(request, ctx)
         try:
-            from_dt = datetime.strptime(from_date, "%Y-%m-%d")
-            to_dt = datetime.strptime(to_date, "%Y-%m-%d").replace(
-                hour=23, minute=59
-            )
-            df = await bot.broker.get_historical(
-                symbol, token, "1d", from_dt, to_dt
-            )
-            if df.empty or len(df) < 5:
-                ctx["error"] = "Not enough data returned for that date range"
-                return templates.TemplateResponse(
-                    request, "partials/backtest_results.html", ctx
-                )
-
-            strategy_cls = _STRATEGY_MAP.get(strategy, ORBStrategy)
-            params = BacktestParams(
-                symbol=symbol, token=token, interval="1d",
-                from_dt=from_dt, to_dt=to_dt,
-            )
-            trades, metrics = run_backtest(strategy_cls(), df, params, qty=qty)
-            ctx.update({"metrics": metrics, "trades": trades})
-
-        except Exception as exc:
+            ctx.update(await _fetch_and_run(bot.broker, symbol, token, strategy, from_date, to_date, qty))
+        except (ValueError, RuntimeError) as exc:
             logger.error("Backtest error: %s", exc)
-            ctx["error"] = f"Backtest failed: {exc}"
-
-        return templates.TemplateResponse(
-            request, "partials/backtest_results.html", ctx
-        )
+            ctx["error"] = str(exc)
+        return _tmpl(request, ctx)
 
     return router
