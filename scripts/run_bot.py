@@ -1,4 +1,4 @@
-"""Main entry point — runs AlgoTrader (paper or live) + web dashboard in one process."""
+"""Main entry point -- runs AlgoTrader (paper or live) + web dashboard in one process."""
 import asyncio
 import logging
 import os
