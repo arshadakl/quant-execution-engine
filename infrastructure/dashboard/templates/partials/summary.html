@@ -1,0 +1,42 @@
+<div class="flex items-center justify-between px-6 py-2.5 flex-wrap gap-y-2">
+
+  <div class="flex items-center gap-0 flex-wrap">
+    <div class="flex flex-col gap-0.5 px-4 sm:px-6 first:pl-0">
+      <span class="text-[9px] tracking-[0.25em] text-ink-d font-normal uppercase">Day P&amp;L</span>
+      <span class="text-[18px] font-semibold tabnum {{ 'text-gain' if summary.day_pnl >= 0 else 'text-loss' }}">
+        {{ "%+.2f"|format(summary.day_pnl) }}
+      </span>
+    </div>
+    <div class="text-line2 text-xl mx-1">|</div>
+    <div class="flex flex-col gap-0.5 px-4 sm:px-6">
+      <span class="text-[9px] tracking-[0.25em] text-ink-d font-normal uppercase">Capital</span>
+      <span class="text-[18px] font-semibold text-snow tabnum">&#8377;{{ "{:,.0f}".format(summary.capital) }}</span>
+    </div>
+    <div class="text-line2 text-xl mx-1">|</div>
+    <div class="flex flex-col gap-0.5 px-4 sm:px-6">
+      <span class="text-[9px] tracking-[0.25em] text-ink-d font-normal uppercase">Open</span>
+      <span class="text-[18px] font-semibold text-snow tabnum">{{ summary.open_count }}</span>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3 pr-2">
+    {% if mode == "live" %}
+    <span class="text-[9px] tracking-[0.25em] font-semibold px-2 py-1 border border-loss/60 text-loss bg-loss/10 uppercase">LIVE</span>
+    {% else %}
+    <span class="text-[9px] tracking-[0.25em] font-semibold px-2 py-1 border border-ink-d/40 text-ink-d bg-bg uppercase">PAPER</span>
+    {% endif %}
+
+    {% if kill_switch %}
+    <form hx-post="/kill-switch" hx-target="#summary-bar" hx-swap="innerHTML" class="inline">
+      <input type="hidden" name="active" value="false">
+      <button type="submit" class="text-[9px] tracking-[0.2em] font-semibold px-3 py-1 border border-gain/60 text-gain bg-gain/10 hover:bg-gain/20 transition-colors uppercase">RESUME</button>
+    </form>
+    {% else %}
+    <form hx-post="/kill-switch" hx-target="#summary-bar" hx-swap="innerHTML" class="inline">
+      <input type="hidden" name="active" value="true">
+      <button type="submit" class="text-[9px] tracking-[0.2em] font-semibold px-3 py-1 border border-loss/60 text-loss bg-loss/10 hover:bg-loss/20 transition-colors uppercase">KILL</button>
+    </form>
+    {% endif %}
+  </div>
+
+</div>

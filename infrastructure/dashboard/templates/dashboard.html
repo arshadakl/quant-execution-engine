@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALGO // TERMINAL</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:    '#080705', bg1:  '#0F0D0A', bg2: '#161310',
+        line:  '#2C2620', line2:'#3D342C',
+        amber: '#E8A020', 'amber-d':'#9A6A14', 'amber-h':'#FFD166',
+        gain:  '#06D6A0', loss:  '#EF476F',
+        muted: '#5A5048', ink:   '#D4C9BC', 'ink-d':'#7A6E64', snow:'#F0EBE3',
+      },
+      fontFamily: {
+        display: ['"Bebas Neue"','sans-serif'],
+        mono:    ['"IBM Plex Mono"','monospace'],
+      },
+      keyframes: {
+        blink:   { '0%,100%':{opacity:'1'},'50%':{opacity:'0'} },
+        pdot:    { '0%,100%':{opacity:'1'},'50%':{opacity:'0.5'} },
+        flicker: { '0%,96%,100%':{opacity:'1'},'97%':{opacity:'0.93'},'98%':{opacity:'1'},'99%':{opacity:'0.96'} },
+        'row-in':{ from:{opacity:'0',transform:'translateX(-8px)'},to:{opacity:'1',transform:'translateX(0)'} },
+      },
+      animation: {
+        blink:   'blink 1s step-end infinite',
+        pdot:    'pdot 2s ease-in-out infinite',
+        flicker: 'flicker 8s infinite',
+        'row-in':'row-in 0.3s ease-out',
+      },
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Scanline overlay — needs pseudo-element, not possible in Tailwind alone */
+  body::before {
+    content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
+    background:repeating-linear-gradient(to bottom,transparent 0px,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px);
+    animation:flicker 8s infinite;
+  }
+  @keyframes flicker{0%,96%,100%{opacity:1}97%{opacity:.93}98%{opacity:1}99%{opacity:.96}}
+  /* Custom scrollbar */
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-track{background:#080705}
+  ::-webkit-scrollbar-thumb{background:#3D342C}
+  ::-webkit-scrollbar-thumb:hover{background:#9A6A14}
+  *{scrollbar-width:thin;scrollbar-color:#3D342C #080705}
+  /* Number tabular nums */
+  .tabnum{font-variant-numeric:tabular-nums}
+</style>
+</head>
+
+<body class="bg-bg font-mono text-ink text-[13px] leading-relaxed min-h-screen"
+      style="background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px)">
+
+<!-- ─── TOP BAR ─── -->
+<header class="flex items-center justify-between px-6 h-12 bg-bg1 border-b border-line sticky top-0 z-50">
+  <div class="flex flex-col">
+    <div class="font-display text-[26px] tracking-[0.12em] text-amber leading-none"
+         style="text-shadow:0 0 20px rgba(232,160,32,0.4)">
+      ALGO <span class="text-muted text-[18px]">//</span> TERMINAL
+    </div>
+    <div class="text-[9px] tracking-[0.3em] text-amber-d font-light uppercase mt-0.5">
+      NSE · BSE · INTRADAY
+    </div>
+  </div>
+
+  <div class="flex items-center gap-3 sm:gap-5">
+    <div class="hidden sm:flex items-center gap-2">
+      <div class="w-2 h-2 rounded-full bg-gain animate-pdot"
+           style="box-shadow:0 0 6px #06D6A0"></div>
+      <span class="text-[10px] tracking-[0.2em] text-gain font-medium">LIVE</span>
+    </div>
+    <div id="clock" class="text-[11px] sm:text-[13px] font-medium text-amber tracking-[0.08em] tabnum">--:--:--</div>
+    <a href="/logout" class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-2 py-1 hover:border-loss/50 hover:text-loss transition-colors uppercase">LOGOUT</a>
+  </div>
+</header>
+
+<!-- ─── SUMMARY STRIP ─── -->
+<div id="summary-bar" class="bg-bg1 border-b border-line"
+     hx-get="/partials/summary" hx-trigger="load, every 5s" hx-swap="innerHTML">
+  {% with summary=state.summary, mode=state.mode, kill_switch=state.kill_switch %}{% include "partials/summary.html" %}{% endwith %}
+</div>
+
+<!-- ─── MAIN GRID ─── -->
+<div class="grid gap-px bg-line grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_280px] lg:[grid-template-rows:auto_auto]" style="min-height:calc(100vh - 100px)">
+
+  <!-- OPEN POSITIONS -->
+  <div class="bg-bg1 flex flex-col overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-line bg-bg2">
+      <div class="font-display text-[16px] tracking-[0.15em] text-amber flex items-center gap-2">
+        <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+        OPEN POSITIONS
+      </div>
+      <span class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-1.5 py-0.5 bg-bg">LIVE</span>
+    </div>
+    <div class="flex-1 overflow-y-auto" id="positions-panel"
+         hx-get="/partials/positions" hx-trigger="load, every 3s" hx-swap="innerHTML">
+      {% with positions=state.positions %}{% include "partials/positions.html" %}{% endwith %}
+    </div>
+  </div>
+
+  <!-- SIGNALS -->
+  <div class="bg-bg1 flex flex-col overflow-hidden">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-line bg-bg2">
+      <div class="font-display text-[16px] tracking-[0.15em] text-amber flex items-center gap-2">
+        <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+        SIGNALS
+        <span class="inline-block w-2 h-3.5 bg-amber align-middle ml-1 animate-blink"></span>
+      </div>
+      <span class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-1.5 py-0.5 bg-bg">POLLING</span>
+    </div>
+    <div class="flex-1 overflow-y-auto" id="signals-panel"
+         hx-get="/partials/signals" hx-trigger="load, every 10s" hx-swap="innerHTML">
+      {% with signals=state.signals %}{% include "partials/signals.html" %}{% endwith %}
+    </div>
+  </div>
+
+  <!-- SIDE PANEL: STRATEGIES + RISK -->
+  <div class="bg-bg1 flex flex-col overflow-hidden sm:col-span-2 lg:col-span-1 lg:[grid-column:3] lg:[grid-row:1/3]">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-line bg-bg2">
+      <div class="font-display text-[16px] tracking-[0.15em] text-amber flex items-center gap-2">
+        <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+        STRATEGIES
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto">
+      <div id="strategy-panel">
+        {% with strategies=state.strategies %}{% include "partials/strategies.html" %}{% endwith %}
+      </div>
+      <div class="border-t border-line">
+        <div class="flex items-center px-4 py-3 border-b border-line bg-bg1">
+          <div class="font-display text-[14px] tracking-[0.15em] text-amber flex items-center gap-2">
+            <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+            RISK PARAMS
+          </div>
+        </div>
+        <div id="risk-panel">
+          {% with risk=state.risk %}{% include "partials/risk.html" %}{% endwith %}
+        </div>
+      </div>
+      <div class="border-t border-line">
+        <div class="flex items-center px-4 py-3 border-b border-line bg-bg1">
+          <div class="font-display text-[14px] tracking-[0.15em] text-amber flex items-center gap-2">
+            <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+            HEALTH
+          </div>
+        </div>
+        <div id="health-panel"
+             hx-get="/partials/health" hx-trigger="load, every 10s" hx-swap="innerHTML">
+          {% with health=state.health %}{% include "partials/health.html" %}{% endwith %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRADE HISTORY -->
+  <div class="bg-bg1 flex flex-col overflow-hidden sm:col-span-2">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-line bg-bg2">
+      <div class="font-display text-[16px] tracking-[0.15em] text-amber flex items-center gap-2">
+        <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+        TRADE HISTORY
+      </div>
+      <span class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-1.5 py-0.5 bg-bg">TODAY</span>
+    </div>
+    <div class="flex-1 overflow-y-auto" id="history-panel"
+         hx-get="/partials/history" hx-trigger="load, every 15s" hx-swap="innerHTML">
+      {% with history=state.history %}{% include "partials/history.html" %}{% endwith %}
+    </div>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+<script>
+// IST clock
+function tick(){
+  const ist=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Kolkata'}));
+  const p=n=>String(n).padStart(2,'0');
+  document.getElementById('clock').textContent=p(ist.getHours())+':'+p(ist.getMinutes())+':'+p(ist.getSeconds())+' IST';
+}
+tick(); setInterval(tick,1000);
+</script>
+</body>
+</html>
