@@ -6,6 +6,7 @@ from fastapi import FastAPI, Request, Header, HTTPException, Form, Cookie, Depen
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from infrastructure.dashboard.state_bridge import StateBridge
+from infrastructure.dashboard.backtest_routes import create_backtest_router
 
 if TYPE_CHECKING:
     from core.use_cases.trading_bot import TradingBot
@@ -21,6 +22,7 @@ def create_app(
 ) -> FastAPI:
     _bridge = bridge or StateBridge()
     app = FastAPI(title="AlgoTrader Dashboard", docs_url=None, redoc_url=None)
+    _bot_ref = [bot]
     templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
 
     def _auth(
@@ -30,6 +32,8 @@ def create_app(
         if x_api_token == api_token or algo_token == api_token:
             return
         raise HTTPException(status_code=401, detail="Unauthorized")
+
+    app.include_router(create_backtest_router(_auth, _bot_ref))
 
     def _summary_ctx() -> dict:
         return {

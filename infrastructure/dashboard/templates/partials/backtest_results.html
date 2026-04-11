@@ -1,0 +1,10 @@
+{% if error %}
+<div class="error">{{ error }}</div>
+{% elif metrics %}
+<div class="results">
+  <p>Total trades: {{ trades | length }}</p>
+  <p>Net P&amp;L: {{ metrics.net_pnl }}</p>
+</div>
+{% else %}
+<div>No results</div>
+{% endif %}

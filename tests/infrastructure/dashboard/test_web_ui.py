@@ -129,3 +129,30 @@ def test_kill_switch_sets_bridge_when_no_bot(client, auth_headers):
 def test_kill_switch_requires_auth(client):
     resp = client.post("/kill-switch", data={"active": "true"})
     assert resp.status_code == 401
+
+
+# ─── Backtest routes ───
+
+def test_backtest_page_requires_auth(client):
+    resp = client.get("/backtest")
+    assert resp.status_code == 401
+
+
+def test_backtest_page_returns_html(client, auth_headers):
+    resp = client.get("/backtest", headers=auth_headers)
+    assert resp.status_code == 200
+    assert b"BACKTEST" in resp.content
+
+
+def test_backtest_run_no_bot_returns_error(client, auth_headers):
+    resp = client.post(
+        "/backtest/run",
+        data={
+            "symbol": "RELIANCE-EQ", "strategy": "orb",
+            "from_date": "2026-01-01", "to_date": "2026-03-01",
+            "qty": "1",
+        },
+        headers=auth_headers,
+    )
+    assert resp.status_code == 200
+    assert b"broker not available" in resp.content.lower()

@@ -1,0 +1,109 @@
+"""Backtest routes -- /backtest GET form, /backtest/run POST results."""
+import logging
+from datetime import datetime
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from fastapi import APIRouter, Depends, Form, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+
+from backtester.optimizer import run_backtest
+from strategies.base_strategy import BacktestParams
+from strategies.ema_crossover import EMACrossoverStrategy
+from strategies.gap_fill import GapFillStrategy
+from strategies.momentum_breakout import MomentumBreakoutStrategy
+from strategies.orb import ORBStrategy
+from strategies.vwap_reversion import VWAPReversionStrategy
+from infrastructure.config.settings import get_symbol_tokens
+
+if TYPE_CHECKING:
+    from core.use_cases.trading_bot import TradingBot
+
+logger = logging.getLogger(__name__)
+
+_TEMPLATES_DIR = Path(__file__).parent / "templates"
+
+_STRATEGY_MAP = {
+    "orb": ORBStrategy,
+    "vwap": VWAPReversionStrategy,
+    "ema": EMACrossoverStrategy,
+    "momentum": MomentumBreakoutStrategy,
+    "gap_fill": GapFillStrategy,
+}
+
+
+def create_backtest_router(auth_dep, bot_ref: list) -> APIRouter:
+    """Return APIRouter for backtest routes.
+
+    auth_dep  -- the _auth Depends callable from create_app
+    bot_ref   -- single-element list holding the TradingBot (mutable ref)
+    """
+    router = APIRouter()
+    templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
+    symbols = list(get_symbol_tokens().keys())
+
+    @router.get("/backtest", response_class=HTMLResponse)
+    async def backtest_page(request: Request, _: None = Depends(auth_dep)):
+        return templates.TemplateResponse(request, "backtest.html", {
+            "symbols": symbols,
+            "strategies": list(_STRATEGY_MAP.keys()),
+        })
+
+    @router.post("/backtest/run", response_class=HTMLResponse)
+    async def backtest_run(
+        request: Request,
+        symbol: str = Form(...),
+        strategy: str = Form(...),
+        from_date: str = Form(...),
+        to_date: str = Form(...),
+        qty: int = Form(1),
+        _: None = Depends(auth_dep),
+    ):
+        bot: "TradingBot | None" = bot_ref[0]
+        ctx: dict = {"symbol": symbol, "strategy": strategy}
+
+        if bot is None:
+            ctx["error"] = "Broker not available -- bot not running"
+            return templates.TemplateResponse(
+                request, "partials/backtest_results.html", ctx
+            )
+
+        token = get_symbol_tokens().get(symbol)
+        if not token:
+            ctx["error"] = f"Unknown symbol: {symbol}"
+            return templates.TemplateResponse(
+                request, "partials/backtest_results.html", ctx
+            )
+
+        try:
+            from_dt = datetime.strptime(from_date, "%Y-%m-%d")
+            to_dt = datetime.strptime(to_date, "%Y-%m-%d").replace(
+                hour=23, minute=59
+            )
+            df = await bot.broker.get_historical(
+                symbol, token, "ONE_DAY", from_dt, to_dt
+            )
+            if df.empty or len(df) < 5:
+                ctx["error"] = "Not enough data returned for that date range"
+                return templates.TemplateResponse(
+                    request, "partials/backtest_results.html", ctx
+                )
+
+            strategy_cls = _STRATEGY_MAP.get(strategy, ORBStrategy)
+            params = BacktestParams(
+                symbol=symbol, token=token, interval="ONE_DAY",
+                from_dt=from_dt, to_dt=to_dt,
+            )
+            trades, metrics = run_backtest(strategy_cls(), df, params, qty=qty)
+            ctx.update({"metrics": metrics, "trades": trades})
+
+        except Exception as exc:
+            logger.error("Backtest error: %s", exc)
+            ctx["error"] = f"Backtest failed: {exc}"
+
+        return templates.TemplateResponse(
+            request, "partials/backtest_results.html", ctx
+        )
+
+    return router
