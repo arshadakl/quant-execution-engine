@@ -115,3 +115,17 @@ def test_risk_post_requires_auth(client):
 def test_summary_endpoint_returns_html(client, auth_headers):
     resp = client.get("/partials/summary", headers=auth_headers)
     assert resp.status_code == 200
+
+
+# ─── Kill switch ───
+
+def test_kill_switch_sets_bridge_when_no_bot(client, auth_headers):
+    """With no bot, kill-switch POST updates bridge and returns summary HTML."""
+    resp = client.post("/kill-switch", data={"active": "true"}, headers=auth_headers)
+    assert resp.status_code == 200
+    assert "text/html" in resp.headers["content-type"]
+
+
+def test_kill_switch_requires_auth(client):
+    resp = client.post("/kill-switch", data={"active": "true"})
+    assert resp.status_code == 401
