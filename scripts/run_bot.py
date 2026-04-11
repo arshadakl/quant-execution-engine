@@ -99,7 +99,10 @@ async def main() -> None:
     finally:
         bot.stop()
         loop_task.cancel()
-        await broker.logout()
+        try:
+            await broker.logout()
+        except Exception:
+            pass  # loop is shutting down, logout best-effort
         logger.info("Shutdown complete")
 
 
