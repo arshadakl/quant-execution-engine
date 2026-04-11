@@ -1,0 +1,17 @@
+# Angel One NSE EQ symbol tokens — used by TradingBot to fetch OHLCV data.
+# Token source: Angel One OpenAPI ScripMaster JSON (NSE segment, EQ series).
+# Verify / update tokens from:
+#   https://margincalculator.angelbroking.com/OpenAPI_File/files/OpenAPIScripMaster.json
+# Filter: exch_seg=NSE, symbol contains "-EQ"
+
+tokens:
+  RELIANCE-EQ: "2885"
+  TCS-EQ:      "11536"
+  INFY-EQ:     "1594"
+  HDFCBANK-EQ: "1333"
+  WIPRO-EQ:    "3787"
+  SBIN-EQ:     "3045"
+  AXISBANK-EQ: "5900"
+  ICICIBANK-EQ: "4963"
+  BAJFINANCE-EQ: "317"
+  MARUTI-EQ:   "10999"

@@ -84,3 +84,15 @@ def get_settings() -> Settings:
     that need a fresh instance with different env vars.
     """
     return Settings()
+
+
+_TOKENS_PATH = Path(__file__).resolve().parent.parent.parent / "config" / "symbol_tokens.yaml"
+
+
+def get_symbol_tokens() -> dict[str, str]:
+    """Return {tradingsymbol: token_str} mapping from symbol_tokens.yaml."""
+    if not _TOKENS_PATH.exists():
+        return {}
+    with open(_TOKENS_PATH) as f:
+        data = yaml.safe_load(f) or {}
+    return data.get("tokens", {})
