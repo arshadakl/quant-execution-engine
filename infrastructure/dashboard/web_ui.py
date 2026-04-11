@@ -31,12 +31,12 @@ def create_app(
             return
         raise HTTPException(status_code=401, detail="Unauthorized")
 
-    # -- Login / Logout --------------------------------------------------------
+    def _summary_ctx():
+        return {"summary": _bridge.get("summary"), "mode": _bridge.get("mode"), "kill_switch": _bridge.get("kill_switch")}
 
     @app.get("/login", response_class=HTMLResponse)
     async def login_get(request: Request):
         return templates.TemplateResponse(request, "login.html", {})
-
     @app.post("/login")
     async def login_post(request: Request, token: str = Form(...)):
         if token != api_token:
@@ -52,9 +52,6 @@ def create_app(
         resp = RedirectResponse(url="/login", status_code=303)
         resp.delete_cookie("algo_token")
         return resp
-
-    # -- Dashboard -------------------------------------------------------------
-
     @app.get("/", response_class=HTMLResponse)
     async def dashboard(request: Request, _: None = Depends(_auth)):
         return templates.TemplateResponse(
@@ -67,41 +64,27 @@ def create_app(
             request, "partials/positions.html",
             {"positions": _bridge.get("positions")},
         )
-
     @app.get("/partials/signals", response_class=HTMLResponse)
     async def signals(request: Request, _: None = Depends(_auth)):
         return templates.TemplateResponse(
             request, "partials/signals.html",
             {"signals": _bridge.get("signals")},
         )
-
     @app.get("/partials/history", response_class=HTMLResponse)
     async def history(request: Request, _: None = Depends(_auth)):
         return templates.TemplateResponse(
             request, "partials/history.html",
             {"history": _bridge.get("history")},
         )
-
     @app.get("/partials/summary", response_class=HTMLResponse)
     async def summary(request: Request, _: None = Depends(_auth)):
-        return templates.TemplateResponse(
-            request, "partials/summary.html",
-            {
-                "summary": _bridge.get("summary"),
-                "mode": _bridge.get("mode"),
-                "kill_switch": _bridge.get("kill_switch"),
-            },
-        )
-
+        return templates.TemplateResponse(request, "partials/summary.html", _summary_ctx())
     @app.get("/partials/health", response_class=HTMLResponse)
     async def health_partial(request: Request, _: None = Depends(_auth)):
         return templates.TemplateResponse(
             request, "partials/health.html",
             {"health": _bridge.get("health")},
         )
-
-    # -- Controls --------------------------------------------------------------
-
     @app.post("/strategy/{name}/toggle", response_class=HTMLResponse)
     async def toggle_strategy(name: str, request: Request, _: None = Depends(_auth)):
         current = (_bridge.get("strategies") or {}).get(name, False)
@@ -117,13 +100,11 @@ def create_app(
             request, "partials/strategies.html",
             {"strategies": _bridge.get("strategies")},
         )
-
     @app.get("/risk", response_class=HTMLResponse)
     async def risk_get(request: Request, _: None = Depends(_auth)):
         return templates.TemplateResponse(
             request, "partials/risk.html", {"risk": _bridge.get("risk")}
         )
-
     @app.post("/risk", response_class=HTMLResponse)
     async def risk_post(
         request: Request,
@@ -141,25 +122,12 @@ def create_app(
         return templates.TemplateResponse(
             request, "partials/risk.html", {"risk": risk}
         )
-
     @app.post("/kill-switch", response_class=HTMLResponse)
-    async def kill_switch(
-        request: Request,
-        active: bool = Form(...),
-        _: None = Depends(_auth),
-    ):
+    async def kill_switch(request: Request, active: bool = Form(...), _: None = Depends(_auth)):
         if bot:
             bot.set_kill_switch(active)
         else:
             _bridge.set("kill_switch", active)
         logger.warning("kill switch set via dashboard: %s", active)
-        return templates.TemplateResponse(
-            request, "partials/summary.html",
-            {
-                "summary": _bridge.get("summary"),
-                "mode": _bridge.get("mode"),
-                "kill_switch": _bridge.get("kill_switch"),
-            },
-        )
-
+        return templates.TemplateResponse(request, "partials/summary.html", _summary_ctx())
     return app
