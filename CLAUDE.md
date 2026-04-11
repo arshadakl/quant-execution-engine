@@ -107,7 +107,7 @@ scripts/             ← Entry points only. No business logic.
 | 2 — Backtesting | `stage-2/backtest` | COMPLETE | 10 | 10 |
 | 3 — Scanner + Risk | `stage-3/scanner-risk` | COMPLETE | 8 | 8 |
 | 4 — Execution | `stage-4/execution` | COMPLETE | 6 | 6 |
-| 5 — Deploy | `stage-5/deploy` | PENDING | 0 | 6 |
+| 5 — Deploy | `stage-5/deploy` | IN PROGRESS | 1 | 6 |
 
 **Total:** ~37 sessions across 5 stages.
 
@@ -176,12 +176,12 @@ scripts/             ← Entry points only. No business logic.
 
 | # | Module | File | Status | Notes |
 |---|---|---|---|---|
-| 1 | Telegram notifier | adapters/notifications/telegram_notifier.py | PENDING | |
-| 2 | Error recovery | adapters/broker/error_recovery.py | PENDING | |
-| 3 | Web UI | infrastructure/dashboard/web_ui.py | PENDING | |
-| 4 | Health monitor | infrastructure/health_monitor.py | PENDING | |
+| 1 | Telegram notifier | adapters/notifications/telegram_notifier.py | DONE | async aiohttp wrapper, notify_entry/notify_error, disabled gracefully when token absent |
+| 2 | Error recovery | adapters/broker/error_recovery.py | DONE | exponential backoff with jitter, max 3 retries, non-retryable error list |
+| 3 | Web UI | infrastructure/dashboard/web_ui.py | DONE | FastAPI + Jinja2 + HTMX; kill switch, mode badge, health panel, logout, mobile responsive |
+| 4 | Health monitor | infrastructure/health_monitor.py | DONE | heartbeat tracker, stale-after-120s, system_status dict |
 | 5 | VPS deploy scripts | scripts/deploy/ | PENDING | |
-| 6 | Integration tests | tests/integration/ | PENDING | |
+| 6 | Integration tests | tests/integration/ | DONE | 4 tests: signal-fill-bridge, kill-switch block, strategy toggle, full-cycle summary |
 
 ---
 
@@ -204,6 +204,18 @@ scripts/             ← Entry points only. No business logic.
 - Stage N, Session M: what was built
 - Next: what the next session should pick up
 -->
+
+### 2026-04-11
+- Stage 5, Session 1: Deploy (partial) -- 5 of 6 modules complete. 494 total tests pass. Stage 5 IN PROGRESS.
+  - State bridge: thread-safe StateBridge with deep-copy get(), lock-safe update_health()
+  - Symbol tokens: config/symbol_tokens.yaml, get_symbol_tokens() with lru_cache
+  - TradingBot orchestrator: core/use_cases/trading_bot.py -- wires all components, full strategy cycle, signal dicts for dashboard
+  - Bot startup script: scripts/run_bot.py -- async event loop, all components wired, uvicorn co-runs with bot
+  - Web UI live wiring: FastAPI routes read StateBridge, kill-switch route, strategy toggle, risk params update bot
+  - Dashboard UI: kill switch button (KILL/RESUME), mode badge (LIVE/PAPER), health panel, logout, mobile responsive grid
+  - Integration tests: signal→fill→bridge, kill-switch block, strategy toggle, full-cycle summary (4 tests)
+- Remaining: Stage 5 Module 5 -- VPS deploy scripts (scripts/deploy/)
+- Next: Write deploy scripts (systemd service, nginx config, .env template, bootstrap script)
 
 ### 2026-04-10 (continued)
 - Stage 4, Sessions 1-6: Execution — all 6 modules complete. 69 new tests, 412 total pass. Stage 4 COMPLETE.
