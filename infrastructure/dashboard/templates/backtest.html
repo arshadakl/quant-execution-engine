@@ -1,15 +1,118 @@
-<!doctype html>
-<html>
-<head><title>BACKTEST</title></head>
-<body>
-<h1>BACKTEST</h1>
-<form method="post" action="/backtest/run">
-  <input name="symbol" placeholder="Symbol">
-  <input name="strategy" placeholder="Strategy">
-  <input name="from_date" placeholder="From date">
-  <input name="to_date" placeholder="To date">
-  <input name="qty" value="1">
-  <button type="submit">Run</button>
-</form>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALGO // BACKTEST</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:'#080705', bg1:'#0F0D0A', bg2:'#161310',
+        line:'#2C2620', line2:'#3D342C',
+        amber:'#E8A020', 'amber-d':'#9A6A14', 'amber-h':'#FFD166',
+        gain:'#06D6A0', loss:'#EF476F',
+        muted:'#5A5048', ink:'#D4C9BC', 'ink-d':'#7A6E64', snow:'#F0EBE3',
+      },
+      fontFamily: {
+        display:['"Bebas Neue"','sans-serif'],
+        mono:['"IBM Plex Mono"','monospace'],
+      },
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="bg-bg font-mono text-ink text-[13px] leading-relaxed min-h-screen">
+
+<!-- TOP BAR -->
+<header class="flex items-center justify-between px-6 h-12 bg-bg1 border-b border-line sticky top-0 z-50">
+  <div class="font-display text-[26px] tracking-[0.12em] text-amber leading-none"
+       style="text-shadow:0 0 20px rgba(232,160,32,0.4)">
+    ALGO <span class="text-muted text-[18px]">//</span> BACKTEST
+  </div>
+  <div class="flex items-center gap-4">
+    <a href="/" class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-2 py-1 hover:border-amber/50 hover:text-amber transition-colors uppercase">DASHBOARD</a>
+    <a href="/logout" class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-2 py-1 hover:border-loss/50 hover:text-loss transition-colors uppercase">LOGOUT</a>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="max-w-3xl mx-auto px-4 py-8">
+
+  <!-- FORM CARD -->
+  <div class="bg-bg1 border border-line p-6 mb-6">
+    <div class="font-display text-[20px] tracking-[0.15em] text-amber mb-5 flex items-center gap-2">
+      <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+      RUN BACKTEST
+    </div>
+
+    <form hx-post="/backtest/run" hx-target="#results" hx-swap="innerHTML" hx-indicator="#spinner">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] tracking-[0.2em] text-ink-d uppercase">Symbol</label>
+          <select name="symbol" class="bg-bg border border-line2 text-ink px-3 py-2 focus:border-amber outline-none">
+            {% for s in symbols %}
+            <option value="{{ s }}">{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] tracking-[0.2em] text-ink-d uppercase">Strategy</label>
+          <select name="strategy" class="bg-bg border border-line2 text-ink px-3 py-2 focus:border-amber outline-none">
+            {% for s in strategies %}
+            <option value="{{ s }}">{{ s | upper }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] tracking-[0.2em] text-ink-d uppercase">From Date</label>
+          <input type="date" name="from_date" value="2026-01-01"
+                 class="bg-bg border border-line2 text-ink px-3 py-2 focus:border-amber outline-none">
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] tracking-[0.2em] text-ink-d uppercase">To Date</label>
+          <input type="date" name="to_date" value="2026-03-31"
+                 class="bg-bg border border-line2 text-ink px-3 py-2 focus:border-amber outline-none">
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-[10px] tracking-[0.2em] text-ink-d uppercase">Qty per trade</label>
+          <input type="number" name="qty" value="1" min="1" max="500"
+                 class="bg-bg border border-line2 text-ink px-3 py-2 focus:border-amber outline-none">
+        </div>
+
+      </div>
+
+      <div class="flex items-center gap-4">
+        <button type="submit"
+                class="bg-amber text-bg font-display text-[16px] tracking-[0.15em] px-6 py-2 hover:bg-amber-h transition-colors">
+          RUN
+        </button>
+        <span id="spinner" class="htmx-indicator text-[10px] tracking-[0.2em] text-amber-d animate-pulse">
+          RUNNING...
+        </span>
+      </div>
+    </form>
+  </div>
+
+  <!-- RESULTS TARGET -->
+  <div id="results"></div>
+
+</div>
+
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+<style>
+  .htmx-indicator { display: none; }
+  .htmx-request .htmx-indicator { display: inline; }
+</style>
 </body>
 </html>
