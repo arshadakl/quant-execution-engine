@@ -100,6 +100,11 @@ async def test_strategy_cycle_updates_state_bridge(bot):
     await bot._strategy_cycle()
     signals = bot.state_bridge.get("signals")
     assert isinstance(signals, list)
+    assert len(signals) == 1
+    assert signals[0]["symbol"] == "RELIANCE-EQ"
+    assert "entry" in signals[0]
+    assert "sl" in signals[0]
+    assert "target" in signals[0]
 
 
 @pytest.mark.asyncio
@@ -137,3 +142,12 @@ def test_set_kill_switch_updates_bridge(bot):
 def test_toggle_strategy_updates_engine(bot):
     bot.toggle_strategy("orb", False)
     assert bot.strategy_engine._enabled.get("orb") is False
+
+
+@pytest.mark.asyncio
+async def test_run_loop_stops_on_stop(bot):
+    """run_loop exits cleanly when stop() is called."""
+    task = asyncio.create_task(bot.run_loop(interval_seconds=0))
+    await asyncio.sleep(0.05)
+    bot.stop()
+    await asyncio.wait_for(task, timeout=2.0)  # must not hang

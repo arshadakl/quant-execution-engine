@@ -97,7 +97,17 @@ class TradingBot:
                 logger.error("data/strategy error for %s: %s", symbol, exc)
 
         self.health_monitor.record_heartbeat("strategy_loop")
-        self.state_bridge.set("signals", [s.symbol for s in pending_signals])
+        self.state_bridge.set("signals", [
+            {
+                "symbol": s.symbol,
+                "direction": s.direction,
+                "strategy": s.strategy,
+                "entry": s.entry_price,
+                "sl": s.stop_loss,
+                "target": s.target_1,
+            }
+            for s in pending_signals
+        ])
 
         for signal in pending_signals:
             ok, reason = self.risk_manager.validate(
@@ -115,7 +125,6 @@ class TradingBot:
 
             fill_price = ltp_map.get(signal.symbol, signal.entry_price)
             self.paper_trader.fill(signal, qty, fill_price)
-            self._risk_state.open_positions += 1
             self._risk_state.last_trade_time = now
             await self.telegram.notify_entry(signal, qty, fill_price)
 
@@ -134,6 +143,7 @@ class TradingBot:
         day_pnl = self.paper_trader.day_pnl()
         self._risk_state.daily_pnl = day_pnl
 
+        self._risk_state.open_positions = len(positions)
         self.state_bridge.set("positions", positions)
         self.state_bridge.update_summary(
             day_pnl=day_pnl,
