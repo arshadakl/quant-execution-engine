@@ -44,3 +44,14 @@ def test_update_summary_merges_fields():
     b.update_summary(day_pnl=1500.0, capital=101500.0, open_count=2)
     assert b.get("summary")["day_pnl"] == 1500.0
     assert b.get("summary")["open_count"] == 2
+
+
+def test_update_health_stores_system_status():
+    from unittest.mock import MagicMock
+    b = StateBridge()
+    monitor = MagicMock()
+    monitor.system_status.return_value = {"broker": {"healthy": True, "last_seen": "2026-04-11T10:00:00"}}
+    b.update_health(monitor)
+    health = b.get("health")
+    assert health == {"broker": {"healthy": True, "last_seen": "2026-04-11T10:00:00"}}
+    monitor.system_status.assert_called_once()
