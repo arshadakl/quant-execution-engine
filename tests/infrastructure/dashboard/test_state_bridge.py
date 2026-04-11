@@ -44,6 +44,7 @@ def test_update_summary_merges_fields():
     b.update_summary(day_pnl=1500.0, capital=101500.0, open_count=2)
     assert b.get("summary")["day_pnl"] == 1500.0
     assert b.get("summary")["open_count"] == 2
+    assert b.get("summary")["capital"] == 101500.0
 
 
 def test_update_health_stores_system_status():

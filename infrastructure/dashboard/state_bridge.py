@@ -26,7 +26,7 @@ class StateBridge:
     def get(self, key: str) -> Any:
         """Get value by key. Returns None if key missing."""
         with self._lock:
-            return self._data.get(key)
+            return copy.deepcopy(self._data.get(key))
 
     def set(self, key: str, value: Any) -> None:
         """Set key-value pair. Thread-safe."""
@@ -41,7 +41,7 @@ class StateBridge:
     def update_summary(
         self, day_pnl: float, capital: float, open_count: int
     ) -> None:
-        """Update summary metrics. Thread-safe."""
+        """Replace summary metrics (day_pnl, capital, open_count)."""
         with self._lock:
             self._data["summary"] = {
                 "day_pnl": day_pnl,
@@ -50,6 +50,7 @@ class StateBridge:
             }
 
     def update_health(self, health_monitor: Any) -> None:
-        """Update health status from monitor. Thread-safe."""
+        """Store health monitor status snapshot."""
+        status = health_monitor.system_status()
         with self._lock:
-            self._data["health"] = health_monitor.system_status()
+            self._data["health"] = status
