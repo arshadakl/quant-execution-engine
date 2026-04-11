@@ -4,6 +4,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
+import pandas as pd
+
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -32,6 +35,37 @@ _STRATEGY_MAP = {
     "gap_fill": GapFillStrategy,
 }
 
+# ORB and VWAP are intraday strategies — need 5m candles
+_STRATEGY_INTERVALS: dict[str, str] = {
+    "orb": "5m", "vwap": "5m",
+    "ema": "1d", "momentum": "1d", "gap_fill": "1d",
+}
+
+
+def _make_demo_df(n: int = 90) -> pd.DataFrame:
+    """Synthetic daily OHLCV for demo when broker is unavailable."""
+    rng = np.random.default_rng(42)
+    ret = rng.normal(0.001, 0.015, n)
+    c = 2850.0 * np.cumprod(1 + ret)
+    w = rng.uniform(0.004, 0.012, n)
+    return pd.DataFrame({
+        "open":   c * (1 + rng.uniform(-0.004, 0.004, n)),
+        "high":   c * (1 + w),
+        "low":    c * (1 - w),
+        "close":  c,
+        "volume": rng.integers(300_000, 800_000, n).astype(float),
+    })
+
+
+def _run_demo(strategy: str, qty: int) -> dict:
+    """Run backtest on synthetic data — shown when broker is unavailable."""
+    params = BacktestParams(
+        symbol="DEMO", token="0", interval="1d",
+        from_dt=datetime(2026, 1, 1), to_dt=datetime(2026, 3, 31),
+    )
+    trades, metrics = run_backtest(_STRATEGY_MAP[strategy](), _make_demo_df(), params, qty=qty)
+    return {"metrics": metrics, "trades": trades, "demo": True}
+
 
 async def _fetch_and_run(
     broker,
@@ -46,12 +80,12 @@ async def _fetch_and_run(
     to_dt = datetime.strptime(to_date, "%Y-%m-%d").replace(hour=23, minute=59)
     if from_dt >= to_dt:
         return {"error": "from_date must be before to_date"}
-    df = await broker.get_historical(symbol, token, "1d", from_dt, to_dt)
+    interval = _STRATEGY_INTERVALS.get(strategy_name, "1d")
+    df = await broker.get_historical(symbol, token, interval, from_dt, to_dt)
     if df.empty or len(df) < 5:
         return {"error": "Not enough data returned for that date range"}
-    strategy_cls = _STRATEGY_MAP[strategy_name]
-    params = BacktestParams(symbol=symbol, token=token, interval="1d", from_dt=from_dt, to_dt=to_dt)
-    trades, metrics = run_backtest(strategy_cls(), df, params, qty=qty)
+    params = BacktestParams(symbol=symbol, token=token, interval=interval, from_dt=from_dt, to_dt=to_dt)
+    trades, metrics = run_backtest(_STRATEGY_MAP[strategy_name](), df, params, qty=qty)
     return {"metrics": metrics, "trades": trades}
 
 
@@ -88,15 +122,15 @@ def create_backtest_router(auth_dep, bot_ref: list) -> APIRouter:
     ):
         bot: "TradingBot | None" = bot_ref[0]
         ctx: dict = {"symbol": symbol, "strategy": strategy}
+        if strategy not in _STRATEGY_MAP:
+            ctx["error"] = f"Unknown strategy: {strategy}"
+            return _tmpl(request, ctx)
         if bot is None:
-            ctx["error"] = "Broker not available -- bot not running"
+            ctx.update(_run_demo(strategy, qty))
             return _tmpl(request, ctx)
         token = get_symbol_tokens().get(symbol)
         if not token:
             ctx["error"] = f"Unknown symbol: {symbol}"
-            return _tmpl(request, ctx)
-        if strategy not in _STRATEGY_MAP:
-            ctx["error"] = f"Unknown strategy: {strategy}"
             return _tmpl(request, ctx)
         try:
             ctx.update(await _fetch_and_run(bot.broker, symbol, token, strategy, from_date, to_date, qty))

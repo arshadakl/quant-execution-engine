@@ -62,13 +62,26 @@ tailwind.config = {
 
 <!-- ─── TOP BAR ─── -->
 <header class="flex items-center justify-between px-6 h-12 bg-bg1 border-b border-line sticky top-0 z-50">
-  <div class="flex flex-col">
-    <div class="font-display text-[26px] tracking-[0.12em] text-amber leading-none"
-         style="text-shadow:0 0 20px rgba(232,160,32,0.4)">
-      ALGO <span class="text-muted text-[18px]">//</span> TERMINAL
-    </div>
-    <div class="text-[9px] tracking-[0.3em] text-amber-d font-light uppercase mt-0.5">
-      NSE · BSE · INTRADAY
+  <div class="flex items-center gap-3">
+    <svg width="26" height="26" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="7" y1="3" x2="7" y2="7" stroke="#06D6A0" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="4" y="7" width="6" height="11" fill="#06D6A0" rx="0.5"/>
+      <line x1="7" y1="18" x2="7" y2="22" stroke="#06D6A0" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="16" y1="5" x2="16" y2="9" stroke="#E8A020" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="13" y="9" width="6" height="14" fill="#E8A020" rx="0.5"/>
+      <line x1="16" y1="23" x2="16" y2="27" stroke="#E8A020" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="25" y1="7" x2="25" y2="11" stroke="#EF476F" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="22" y="11" width="6" height="9" fill="#EF476F" rx="0.5"/>
+      <line x1="25" y1="20" x2="25" y2="24" stroke="#EF476F" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    <div class="flex flex-col">
+      <div class="font-display text-[26px] tracking-[0.12em] text-amber leading-none"
+           style="text-shadow:0 0 20px rgba(232,160,32,0.4)">
+        ALGO <span class="text-muted text-[18px]">//</span> TERMINAL
+      </div>
+      <div class="text-[9px] tracking-[0.3em] text-amber-d font-light uppercase mt-0.5">
+        NSE · BSE · INTRADAY
+      </div>
     </div>
   </div>
 

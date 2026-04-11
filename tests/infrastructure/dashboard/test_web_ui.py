@@ -144,41 +144,38 @@ def test_backtest_page_returns_html(client, auth_headers):
     assert b"BACKTEST" in resp.content
 
 
-def test_backtest_run_no_bot_returns_error(client, auth_headers):
+def test_backtest_run_no_bot_returns_demo_results(client, auth_headers):
+    # Bot is None -- route now runs demo backtest on synthetic data
     resp = client.post(
         "/backtest/run",
         data={
-            "symbol": "RELIANCE-EQ", "strategy": "orb",
+            "symbol": "RELIANCE-EQ", "strategy": "ema",
             "from_date": "2026-01-01", "to_date": "2026-03-01",
             "qty": "1",
         },
         headers=auth_headers,
     )
     assert resp.status_code == 200
-    assert b"broker not available" in resp.content.lower()
+    assert b"DEMO" in resp.content
 
 
 def test_backtest_run_unknown_strategy_returns_error(client, auth_headers):
-    # Bot is None in test fixture, so "broker not available" fires before strategy check.
-    # We verify the route accepts the request (200) and returns an error message.
     resp = client.post("/backtest/run", data={
         "symbol": "RELIANCE-EQ", "strategy": "invalid_strategy",
         "from_date": "2026-01-01", "to_date": "2026-03-01",
         "qty": "1",
     }, headers=auth_headers)
     assert resp.status_code == 200
-    # With no bot the bot-not-running error is returned; strategy guard is present in route code.
-    assert b"broker not available" in resp.content.lower() or b"unknown strategy" in resp.content.lower()
+    assert b"unknown strategy" in resp.content.lower()
 
 
-def test_backtest_run_invalid_date_order_returns_error(client, auth_headers):
-    # from_date after to_date -- only testable when bot is available
-    # since bot is None in test fixtures, we just verify auth works
+def test_backtest_run_invalid_date_order_returns_demo(client, auth_headers):
+    # Date order validation only runs inside _fetch_and_run (with real broker).
+    # With no bot, demo mode runs first and returns results (ignoring dates).
     resp = client.post("/backtest/run", data={
-        "symbol": "RELIANCE-EQ", "strategy": "orb",
+        "symbol": "RELIANCE-EQ", "strategy": "ema",
         "from_date": "2026-03-01", "to_date": "2026-01-01",
         "qty": "1",
     }, headers=auth_headers)
     assert resp.status_code == 200
-    # With no bot, returns broker not available before date check
-    assert b"broker not available" in resp.content.lower()
+    assert b"DEMO" in resp.content

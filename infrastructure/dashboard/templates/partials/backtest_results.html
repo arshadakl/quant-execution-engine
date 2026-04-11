@@ -4,11 +4,16 @@
 </div>
 
 {% elif metrics %}
+{% if demo %}
+<div class="bg-bg2 border border-amber/30 px-4 py-2 mb-3 text-[10px] tracking-[0.2em] text-amber-d flex items-center gap-2">
+  <span class="text-amber">&#9650;</span> DEMO DATA -- connect broker for real market results
+</div>
+{% endif %}
 <!-- METRICS GRID -->
 <div class="bg-bg1 border border-line p-6 mb-4">
   <div class="font-display text-[16px] tracking-[0.15em] text-amber mb-4 flex items-center gap-2">
     <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
-    RESULTS -- {{ strategy | upper }} / {{ symbol }}
+    RESULTS -- {{ strategy | upper }}{% if demo %} / DEMO{% else %} / {{ symbol }}{% endif %}
   </div>
 
   <div class="grid grid-cols-2 sm:grid-cols-3 gap-px bg-line border border-line">
