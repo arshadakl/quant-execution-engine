@@ -7,7 +7,6 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from infrastructure.dashboard.state_bridge import StateBridge
 from infrastructure.dashboard.backtest_routes import create_backtest_router
-
 if TYPE_CHECKING:
     from core.use_cases.trading_bot import TradingBot
 
