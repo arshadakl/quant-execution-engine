@@ -1,14 +1,107 @@
-"""Main entry point — runs the trading bot."""
+"""Main entry point — runs AlgoTrader (paper or live) + web dashboard in one process."""
+import asyncio
 import logging
+import os
+import sys
+from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent.parent / ".env")
+
+import uvicorn
+
+from infrastructure.config.settings import get_settings, get_symbol_tokens
+from infrastructure.dashboard.state_bridge import StateBridge
+from infrastructure.dashboard.web_ui import create_app
+from infrastructure.health_monitor import HealthMonitor
+from adapters.broker.angel_broker import AngelBroker
+from adapters.notifications.telegram_notifier import TelegramNotifier
+from adapters.paper_trader import PaperTrader
+from core.use_cases.strategy_engine import StrategyEngine
+from core.use_cases.risk_manager import RiskManager
+from core.use_cases.position_sizer import PositionSizer
+from core.use_cases.trading_bot import TradingBot
+from strategies.orb import ORBStrategy
+from strategies.vwap_reversion import VWAPReversionStrategy
+from strategies.ema_crossover import EMACrossoverStrategy
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s %(name)s -- %(message)s",
+)
 logger = logging.getLogger(__name__)
 
+DASHBOARD_TOKEN = os.environ.get("DASHBOARD_TOKEN")
+if not DASHBOARD_TOKEN:
+    print("\n  ERROR: DASHBOARD_TOKEN not set in .env\n")
+    sys.exit(1)
 
-def main() -> None:
-    from infrastructure.config.settings import get_settings
+DB_PATH = str(Path(__file__).parent.parent / "data" / "paper_trades.db")
+Path(DB_PATH).parent.mkdir(exist_ok=True)
+
+
+async def main() -> None:
     settings = get_settings()
-    logger.info("AlgoTrader India starting in %s mode", settings.trading.mode)
+    mode = settings.trading.mode
+    logger.info("AlgoTrader starting -- mode=%s", mode)
+
+    bridge = StateBridge()
+    health = HealthMonitor()
+    broker = AngelBroker(settings.broker)
+    telegram = TelegramNotifier(
+        bot_token=os.environ.get("TELEGRAM_BOT_TOKEN", ""),
+        chat_id=os.environ.get("TELEGRAM_CHAT_ID", ""),
+    )
+
+    logger.info("Logging into Angel One...")
+    if not await broker.login():
+        logger.error("Angel One login failed -- check .env credentials")
+        sys.exit(1)
+    health.record_heartbeat("broker")
+    logger.info("Login OK")
+
+    paper_trader = PaperTrader(db_path=DB_PATH, initial_capital=settings.trading.paper_capital)
+    risk_config = settings.risk
+    risk_manager = RiskManager(
+        max_daily_loss_pct=risk_config.max_daily_loss_percent / 100,
+        max_open_positions=risk_config.max_open_positions,
+    )
+    position_sizer = PositionSizer(risk_pct=risk_config.per_trade_risk_percent / 100)
+    strategy_engine = StrategyEngine(strategies=[
+        ORBStrategy(), VWAPReversionStrategy(), EMACrossoverStrategy(),
+    ])
+
+    bot = TradingBot(
+        mode=mode,
+        broker=broker,
+        strategy_engine=strategy_engine,
+        risk_manager=risk_manager,
+        position_sizer=position_sizer,
+        paper_trader=paper_trader,
+        telegram=telegram,
+        health_monitor=health,
+        state_bridge=bridge,
+        symbol_tokens=get_symbol_tokens(),
+    )
+
+    app = create_app(api_token=DASHBOARD_TOKEN)
+
+    loop_task = asyncio.create_task(bot.run_loop(interval_seconds=60))
+    logger.info("Strategy loop started")
+    logger.info("Dashboard >> http://127.0.0.1:8000/login")
+
+    config = uvicorn.Config(app, host="127.0.0.1", port=8000, log_level="warning")
+    server = uvicorn.Server(config)
+    try:
+        await server.serve()
+    finally:
+        bot.stop()
+        loop_task.cancel()
+        await broker.logout()
+        logger.info("Shutdown complete")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
