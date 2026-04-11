@@ -86,7 +86,7 @@ async def main() -> None:
         symbol_tokens=get_symbol_tokens(),
     )
 
-    app = create_app(api_token=DASHBOARD_TOKEN)
+    app = create_app(api_token=DASHBOARD_TOKEN, bridge=bridge, bot=bot)
 
     loop_task = asyncio.create_task(bot.run_loop(interval_seconds=60))
     logger.info("Strategy loop started")
