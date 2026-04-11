@@ -4,8 +4,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import numpy as np
-import pandas as pd
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse
@@ -42,29 +40,6 @@ _STRATEGY_INTERVALS: dict[str, str] = {
 }
 
 
-def _make_demo_df(n: int = 90) -> pd.DataFrame:
-    """Synthetic daily OHLCV for demo when broker is unavailable."""
-    rng = np.random.default_rng(42)
-    ret = rng.normal(0.001, 0.015, n)
-    c = 2850.0 * np.cumprod(1 + ret)
-    w = rng.uniform(0.004, 0.012, n)
-    return pd.DataFrame({
-        "open":   c * (1 + rng.uniform(-0.004, 0.004, n)),
-        "high":   c * (1 + w),
-        "low":    c * (1 - w),
-        "close":  c,
-        "volume": rng.integers(300_000, 800_000, n).astype(float),
-    })
-
-
-def _run_demo(strategy: str, qty: int) -> dict:
-    """Run backtest on synthetic data — shown when broker is unavailable."""
-    params = BacktestParams(
-        symbol="DEMO", token="0", interval="1d",
-        from_dt=datetime(2026, 1, 1), to_dt=datetime(2026, 3, 31),
-    )
-    trades, metrics = run_backtest(_STRATEGY_MAP[strategy](), _make_demo_df(), params, qty=qty)
-    return {"metrics": metrics, "trades": trades, "demo": True}
 
 
 async def _fetch_and_run(
@@ -126,7 +101,7 @@ def create_backtest_router(auth_dep, bot_ref: list) -> APIRouter:
             ctx["error"] = f"Unknown strategy: {strategy}"
             return _tmpl(request, ctx)
         if bot is None:
-            ctx.update(_run_demo(strategy, qty))
+            ctx["error"] = "Bot is not running -- start the bot first (python scripts/run_bot.py)"
             return _tmpl(request, ctx)
         token = get_symbol_tokens().get(symbol)
         if not token:
