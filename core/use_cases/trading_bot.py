@@ -95,6 +95,7 @@ class TradingBot:
                 ltp_map[symbol] = float(df["close"].iloc[-1])
             except Exception as exc:
                 logger.error("data/strategy error for %s: %s", symbol, exc)
+            await asyncio.sleep(0.5)  # avoid Angel One rate limit
 
         self.health_monitor.record_heartbeat("strategy_loop")
         self.state_bridge.set("signals", [
@@ -128,7 +129,26 @@ class TradingBot:
             self._risk_state.last_trade_time = now
             await self.telegram.notify_entry(signal, qty, fill_price)
 
+        await self._refresh_position_ltps(ltp_map)
         self._update_dashboard_state(ltp_map)
+
+    async def _refresh_position_ltps(self, ltp_map: dict[str, float]) -> None:
+        """Fetch real-time LTP for open positions and update ltp_map in place."""
+        open_trades = self.paper_trader.open_trades()
+        if not open_trades:
+            return
+        pairs = [
+            ("NSE", t["symbol"], self.symbol_tokens[t["symbol"]])
+            for t in open_trades
+            if t["symbol"] in self.symbol_tokens
+        ]
+        if not pairs:
+            return
+        try:
+            live_ltp = await self.broker.get_ltp(pairs)
+            ltp_map.update(live_ltp)
+        except Exception as exc:
+            logger.warning("position LTP refresh failed: %s", exc)
 
     def _update_dashboard_state(self, ltp_map: dict[str, float]) -> None:
         """Push current paper trader state into the state bridge."""

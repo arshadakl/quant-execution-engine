@@ -145,6 +145,22 @@ def test_toggle_strategy_updates_engine(bot):
 
 
 @pytest.mark.asyncio
+async def test_open_position_uses_real_ltp_not_candle_close(bot):
+    """Positions must use broker.get_ltp(), not the stale last-candle close."""
+    bot.paper_trader.open_trades = MagicMock(return_value=[{
+        "id": 1, "symbol": "RELIANCE-EQ", "direction": "LONG",
+        "qty": 5, "entry_price": 2850.0, "stop_loss": 2820.0,
+        "target_1": 2910.0, "entry_time": "2026-04-11T10:00:00", "strategy": "ORB",
+    }])
+    bot.broker.get_ltp = AsyncMock(return_value={"RELIANCE-EQ": 2870.0})
+    await bot._strategy_cycle()
+    pos = bot.state_bridge.get("positions")
+    assert pos[0]["current_price"] == pytest.approx(2870.0)
+    assert pos[0]["pnl"] == pytest.approx(100.0)   # (2870-2850)*5
+    bot.broker.get_ltp.assert_called_once()
+
+
+@pytest.mark.asyncio
 async def test_run_loop_stops_on_stop(bot):
     """run_loop exits cleanly when stop() is called."""
     task = asyncio.create_task(bot.run_loop(interval_seconds=0))
