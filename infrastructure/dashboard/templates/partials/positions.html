@@ -1,0 +1,30 @@
+{% if positions %}
+<div class="overflow-x-auto">
+<table class="w-full border-collapse text-[12px]">
+  <thead>
+    <tr>
+      {% for h in ['SYMBOL','STRAT','DIR','QTY','ENTRY','LTP','P&L','TARGET%','TIME'] %}
+      <th class="text-[9px] tracking-[0.2em] text-ink-d font-normal text-left px-3 py-2 border-b border-line bg-bg uppercase whitespace-nowrap">{{ h }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in positions %}
+    <tr class="hover:bg-amber/[0.04] transition-colors duration-100">
+      <td class="px-3 py-[9px] border-b border-line text-snow font-semibold tracking-[0.06em]">{{ p.symbol }}</td>
+      <td class="px-3 py-[9px] border-b border-line text-amber text-[10px] tracking-[0.1em] uppercase">{{ p.strategy }}</td>
+      <td class="px-3 py-[9px] border-b border-line font-semibold tracking-[0.1em] {{ 'text-gain' if p.direction == 'LONG' else 'text-loss' }}">{{ p.direction }}</td>
+      <td class="px-3 py-[9px] border-b border-line text-ink tabnum">{{ p.qty }}</td>
+      <td class="px-3 py-[9px] border-b border-line text-ink tabnum">{{ "%.2f"|format(p.entry_price) }}</td>
+      <td class="px-3 py-[9px] border-b border-line text-ink tabnum">{{ "%.2f"|format(p.current_price) }}</td>
+      <td class="px-3 py-[9px] border-b border-line font-semibold tabnum {{ 'text-gain' if p.pnl >= 0 else 'text-loss' }}">{{ "%+.2f"|format(p.pnl) }}</td>
+      <td class="px-3 py-[9px] border-b border-line tabnum {{ 'text-gain' if p.target_pct >= 0 else 'text-loss' }}">{{ "%+.1f"|format(p.target_pct) }}%</td>
+      <td class="px-3 py-[9px] border-b border-line text-ink-d tabnum text-[11px]">{{ p.entry_time[11:16] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<div class="py-10 px-6 text-center text-ink-d text-[11px] tracking-[0.3em]">— NO OPEN POSITIONS —</div>
+{% endif %}

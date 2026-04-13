@@ -131,7 +131,9 @@ async def test_update_dashboard_state_populates_positions(bot):
     pos = bot.state_bridge.get("positions")
     assert len(pos) == 1
     assert pos[0]["symbol"] == "RELIANCE-EQ"
-    assert pos[0]["pnl"] == pytest.approx(100.0)  # (2870-2850)*5
+    assert pos[0]["pnl"] == pytest.approx(100.0)   # (2870-2850)*5
+    assert "target_pct" in pos[0]
+    assert pos[0]["target_pct"] == pytest.approx(2.1)  # (2910-2850)/2850*100
 
 
 def test_set_kill_switch_updates_bridge(bot):

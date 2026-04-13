@@ -158,7 +158,10 @@ class TradingBot:
             ltp = ltp_map.get(t["symbol"], t["entry_price"])
             mult = 1 if t["direction"] == "LONG" else -1
             pnl = round(mult * (ltp - t["entry_price"]) * t["qty"], 2)
-            positions.append({**t, "current_price": ltp, "pnl": pnl})
+            target_pct = round(
+                mult * (t["target_1"] - t["entry_price"]) / t["entry_price"] * 100, 1
+            )
+            positions.append({**t, "current_price": ltp, "pnl": pnl, "target_pct": target_pct})
 
         day_pnl = self.paper_trader.day_pnl()
         self._risk_state.daily_pnl = day_pnl
