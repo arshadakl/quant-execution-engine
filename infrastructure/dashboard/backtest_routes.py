@@ -42,6 +42,9 @@ _STRATEGY_INTERVALS: dict[str, str] = {
 
 
 
+_CAPITAL_PER_TRADE = 50_000  # ₹50,000 allocation per trade
+
+
 async def _fetch_and_run(
     broker,
     symbol: str,
@@ -49,7 +52,6 @@ async def _fetch_and_run(
     strategy_name: str,
     from_date: str,
     to_date: str,
-    qty: int,
 ) -> dict:
     from_dt = datetime.strptime(from_date, "%Y-%m-%d")
     to_dt = datetime.strptime(to_date, "%Y-%m-%d").replace(hour=23, minute=59)
@@ -59,9 +61,11 @@ async def _fetch_and_run(
     df = await broker.get_historical(symbol, token, interval, from_dt, to_dt)
     if df.empty or len(df) < 5:
         return {"error": "Not enough data returned for that date range"}
+    last_price = float(df["close"].iloc[-1])
+    qty = max(1, int(_CAPITAL_PER_TRADE / last_price))
     params = BacktestParams(symbol=symbol, token=token, interval=interval, from_dt=from_dt, to_dt=to_dt)
     trades, metrics = run_backtest(_STRATEGY_MAP[strategy_name](), df, params, qty=qty)
-    return {"metrics": metrics, "trades": trades}
+    return {"metrics": metrics, "trades": trades, "qty_used": qty}
 
 
 def create_backtest_router(auth_dep, bot_ref: list) -> APIRouter:
@@ -92,7 +96,6 @@ def create_backtest_router(auth_dep, bot_ref: list) -> APIRouter:
         strategy: str = Form(...),
         from_date: str = Form(...),
         to_date: str = Form(...),
-        qty: int = Form(1),
         _: None = Depends(auth_dep),
     ):
         bot: "TradingBot | None" = bot_ref[0]
@@ -108,7 +111,7 @@ def create_backtest_router(auth_dep, bot_ref: list) -> APIRouter:
             ctx["error"] = f"Unknown symbol: {symbol}"
             return _tmpl(request, ctx)
         try:
-            ctx.update(await _fetch_and_run(bot.broker, symbol, token, strategy, from_date, to_date, qty))
+            ctx.update(await _fetch_and_run(bot.broker, symbol, token, strategy, from_date, to_date))
         except (ValueError, RuntimeError) as exc:
             logger.error("Backtest error: %s", exc)
             ctx["error"] = str(exc)

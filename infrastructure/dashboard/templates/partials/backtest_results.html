@@ -6,22 +6,27 @@
 {% elif metrics %}
 <!-- METRICS GRID -->
 <div class="bg-bg1 border border-line p-6 mb-4">
-  <div class="font-display text-[16px] tracking-[0.15em] text-amber mb-4 flex items-center gap-2">
+  <div class="font-display text-[16px] tracking-[0.15em] text-amber mb-1 flex items-center gap-2">
     <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
     RESULTS -- {{ strategy | upper }} / {{ symbol }}
   </div>
+  {% if qty_used %}
+  <div class="text-[10px] tracking-[0.15em] text-ink-d mb-4">
+    Position size: {{ qty_used }} shares &nbsp;·&nbsp; ₹50,000 capital per trade
+  </div>
+  {% endif %}
 
   <div class="grid grid-cols-2 sm:grid-cols-3 gap-px bg-line border border-line">
     {% set cards = [
-      ("Total Trades",    metrics.total_trades,                    ""),
-      ("Win Rate",        metrics.win_rate | round(1),             "%"),
-      ("Profit Factor",   metrics.profit_factor | round(2),        ""),
-      ("Sharpe Ratio",    metrics.sharpe_ratio | round(2),         ""),
-      ("Max Drawdown",    metrics.max_drawdown_pct | round(2),     "%"),
-      ("Total P&L",       metrics.total_net_pnl | round(2),        "&#8377;"),
-      ("Total Return",    metrics.total_return_pct | round(2),     "%"),
-      ("Expectancy",      metrics.expectancy | round(2),           "&#8377;"),
-      ("Sortino",         metrics.sortino_ratio | round(2),        ""),
+      ("Total Trades",    metrics.total_trades,                          ""),
+      ("Win Rate",        (metrics.win_rate * 100) | round(1),           "%"),
+      ("Profit Factor",   metrics.profit_factor | round(2),              ""),
+      ("Sharpe Ratio",    metrics.sharpe_ratio | round(2),               ""),
+      ("Max Drawdown",    (metrics.max_drawdown_pct * 100) | round(2),   "%"),
+      ("Total P&L",       metrics.total_net_pnl | round(2),              "&#8377;"),
+      ("Total Return",    (metrics.total_return_pct * 100) | round(2),   "%"),
+      ("Expectancy",      metrics.expectancy | round(2),                 "&#8377;"),
+      ("Sortino",         metrics.sortino_ratio | round(2),              ""),
     ] %}
     {% for label, value, unit in cards %}
     <div class="bg-bg1 px-4 py-3">
@@ -48,6 +53,7 @@
     <table class="w-full text-[11px] border-collapse">
       <thead>
         <tr class="border-b border-line text-ink-d text-[9px] tracking-[0.15em] uppercase">
+          <th class="text-left py-2 pr-4">Date</th>
           <th class="text-left py-2 pr-4">Direction</th>
           <th class="text-right py-2 pr-4">Entry</th>
           <th class="text-right py-2 pr-4">Exit</th>
@@ -58,6 +64,7 @@
       <tbody>
         {% for t in trades %}
         <tr class="border-b border-line/40 hover:bg-bg2">
+          <td class="py-1.5 pr-4 text-ink-d tabnum">{{ t.entry_time.strftime('%d %b %Y') }}</td>
           <td class="py-1.5 pr-4 {% if t.direction == 'LONG' %}text-gain{% else %}text-loss{% endif %}">
             {{ t.direction }}
           </td>
