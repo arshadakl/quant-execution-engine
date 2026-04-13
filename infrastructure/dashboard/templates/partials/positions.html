@@ -18,7 +18,8 @@
       <td class="px-3 py-[9px] border-b border-line text-ink tabnum">{{ "%.2f"|format(p.entry_price) }}</td>
       <td class="px-3 py-[9px] border-b border-line text-ink tabnum">{{ "%.2f"|format(p.current_price) }}</td>
       <td class="px-3 py-[9px] border-b border-line font-semibold tabnum {{ 'text-gain' if p.pnl >= 0 else 'text-loss' }}">{{ "%+.2f"|format(p.pnl) }}</td>
-      <td class="px-3 py-[9px] border-b border-line tabnum {{ 'text-gain' if p.target_pct >= 0 else 'text-loss' }}">{{ "%+.1f"|format(p.target_pct) }}%</td>
+      {% set tpct = p.get('target_pct', 0) %}
+      <td class="px-3 py-[9px] border-b border-line tabnum {{ 'text-gain' if tpct >= 0 else 'text-loss' }}">{{ "%+.1f"|format(tpct) }}%</td>
       <td class="px-3 py-[9px] border-b border-line text-ink-d tabnum text-[11px]">{{ p.entry_time[11:16] }}</td>
     </tr>
     {% endfor %}

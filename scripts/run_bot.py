@@ -101,7 +101,7 @@ async def main() -> None:
         loop_task.cancel()
         try:
             await broker.logout()
-        except Exception:
+        except BaseException:
             pass  # loop is shutting down, logout best-effort
         logger.info("Shutdown complete")
 
