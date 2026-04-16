@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 from infrastructure.dashboard.state_bridge import StateBridge
 from infrastructure.dashboard.backtest_routes import create_backtest_router
 from infrastructure.dashboard.report_routes import create_report_router
+from infrastructure.dashboard.config_routes import create_config_router
 if TYPE_CHECKING:
     from core.use_cases.trading_bot import TradingBot
 
@@ -38,6 +39,7 @@ def create_app(
 
     app.include_router(create_backtest_router(_auth, _bot_ref))
     app.include_router(create_report_router(_auth, db_path, mode, reports_dir))
+    app.include_router(create_config_router(_auth))
 
     def _summary_ctx() -> dict:
         return {

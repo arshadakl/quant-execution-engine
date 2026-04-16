@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALGO // CONFIG</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:'#080705', bg1:'#0F0D0A', bg2:'#161310',
+        line:'#2C2620', line2:'#3D342C',
+        amber:'#E8A020', 'amber-d':'#9A6A14', 'amber-h':'#FFD166',
+        gain:'#06D6A0', loss:'#EF476F',
+        muted:'#5A5048', ink:'#D4C9BC', 'ink-d':'#7A6E64',
+      },
+      fontFamily: {
+        display:['"Bebas Neue"','sans-serif'],
+        mono:['"IBM Plex Mono"','monospace'],
+      },
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body class="bg-bg font-mono text-ink text-[13px] leading-relaxed min-h-screen">
+
+<header class="flex items-center justify-between px-6 h-12 bg-bg1 border-b border-line sticky top-0 z-50">
+  <div class="font-display text-[26px] tracking-[0.12em] text-amber leading-none"
+       style="text-shadow:0 0 20px rgba(232,160,32,0.4)">
+    ALGO <span class="text-muted text-[18px]">//</span> CONFIG
+  </div>
+  <div class="flex items-center gap-4">
+    <a href="/" class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-2 py-1 hover:border-amber/50 hover:text-amber transition-colors uppercase">DASHBOARD</a>
+    <a href="/backtest" class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-2 py-1 hover:border-amber/50 hover:text-amber transition-colors uppercase">BACKTEST</a>
+    <a href="/reports" class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-2 py-1 hover:border-amber/50 hover:text-amber transition-colors uppercase">REPORTS</a>
+    <a href="/logout" class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-2 py-1 hover:border-loss/50 hover:text-loss transition-colors uppercase">LOGOUT</a>
+  </div>
+</header>
+
+<div class="max-w-3xl mx-auto px-4 py-8 flex flex-col gap-6">
+
+  <!-- TRADING MODE -->
+  <div class="bg-bg1 border border-line p-6">
+    <div class="font-display text-[18px] tracking-[0.15em] text-amber mb-4 flex items-center gap-2">
+      <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+      TRADING MODE
+    </div>
+    <div class="flex items-center gap-4 mb-4">
+      <span class="text-[28px] font-display tracking-[0.2em]
+        {% if trading.mode == 'live' %}text-gain{% else %}text-amber{% endif %}">
+        {{ trading.mode | upper }}
+      </span>
+      {% if trading.mode == 'paper' %}
+      <span class="text-[10px] tracking-[0.12em] text-ink-d border border-line2 px-2 py-1">
+        Simulated fills — no real money at risk
+      </span>
+      {% else %}
+      <span class="text-[10px] tracking-[0.12em] text-loss border border-loss/40 px-2 py-1">
+        &#9888; LIVE — real orders will be placed on Angel One
+      </span>
+      {% endif %}
+    </div>
+    {% if trading.mode == 'paper' %}
+    <div class="text-[11px] text-ink-d mb-4">
+      Paper capital: <span class="text-amber">&#8377;{{ "{:,.0f}".format(trading.paper_capital) }}</span>
+    </div>
+    {% endif %}
+    <div class="bg-bg2 border border-line2 px-4 py-3 text-[11px] leading-loose text-ink-d">
+      <div class="text-amber text-[10px] tracking-[0.2em] mb-2 uppercase">How to switch mode</div>
+      1. Edit <code class="text-amber-h">config/settings.yaml</code><br>
+      2. Set <code class="text-amber-h">trading.mode: "live"</code> or <code class="text-amber-h">"paper"</code><br>
+      3. Restart: <code class="text-amber-h">python scripts/run_bot.py</code><br>
+      <span class="text-loss text-[10px]">&#9888; In live mode, real orders execute on Angel One. Always verify paper results first.</span>
+    </div>
+  </div>
+
+  <!-- RISK PARAMETERS -->
+  <div class="bg-bg1 border border-line p-6">
+    <div class="font-display text-[18px] tracking-[0.15em] text-amber mb-3 flex items-center gap-2">
+      <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+      RISK PARAMETERS
+    </div>
+    <div class="text-[10px] tracking-[0.1em] text-ink-d mb-3">
+      Source: <code class="text-amber-h">config/settings.yaml</code> — edit file and restart to change
+    </div>
+    <div class="grid grid-cols-2 gap-px bg-line border border-line">
+      {% set params = [
+        ("Per Trade Risk %",       risk.per_trade_risk_percent,              "%"),
+        ("Max Position Size %",    risk.max_position_size_percent,           "%"),
+        ("Max Daily Loss %",       risk.max_daily_loss_percent,              "%"),
+        ("Max Daily Trades",       risk.max_daily_trades,                    ""),
+        ("Max Open Positions",     risk.max_open_positions,                  ""),
+        ("No New Trades After",    risk.no_new_trades_after,                 ""),
+        ("Force Square Off",       risk.force_square_off_time,               ""),
+        ("Cooldown Losses",        risk.cooldown_after_consecutive_losses,   " losses"),
+        ("Cooldown Duration",      risk.cooldown_duration_minutes,           " min"),
+        ("Capital Usage %",        risk.max_capital_usage_percent,           "%"),
+      ] %}
+      {% for label, value, unit in params %}
+      <div class="bg-bg1 px-4 py-3">
+        <div class="text-[9px] tracking-[0.2em] text-ink-d uppercase mb-1">{{ label }}</div>
+        <div class="text-[15px] font-display tracking-wider text-amber">{{ value }}{{ unit }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- QUANTITY FORMULA -->
+  <div class="bg-bg1 border border-line p-6">
+    <div class="font-display text-[18px] tracking-[0.15em] text-amber mb-4 flex items-center gap-2">
+      <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+      HOW QUANTITY IS CALCULATED
+    </div>
+    <div class="bg-bg2 border border-line2 px-4 py-3 font-mono text-[11px] text-amber-h mb-3 leading-loose">
+      risk_amount  = capital &times; per_trade_risk_percent<br>
+      risk_qty     = floor( risk_amount &divide; (entry &minus; stop_loss) )<br>
+      cap_qty      = floor( capital &times; max_position_size_percent &divide; entry )<br>
+      final_qty    = min( risk_qty, cap_qty, 500 )
+    </div>
+    <div class="text-[11px] text-ink-d leading-loose">
+      Example with current config (capital &#8377;100,000 · entry &#8377;2,850 · SL &#8377;2,800):<br>
+      risk_amount = &#8377;{{ (risk.per_trade_risk_percent / 100 * 100000) | round(0) | int }}<br>
+      risk_qty = floor( {{ (risk.per_trade_risk_percent / 100 * 100000) | round(0) | int }} &divide; 50 ) = {{ (risk.per_trade_risk_percent / 100 * 100000 / 50) | int }}<br>
+      cap_qty = floor( {{ (risk.max_position_size_percent / 100 * 100000) | round(0) | int }} &divide; 2850 ) = {{ (risk.max_position_size_percent / 100 * 100000 / 2850) | int }}<br>
+      final_qty = min( {{ (risk.per_trade_risk_percent / 100 * 100000 / 50) | int }}, {{ (risk.max_position_size_percent / 100 * 100000 / 2850) | int }}, 500 ) = <span class="text-amber">{{ [[(risk.per_trade_risk_percent / 100 * 100000 / 50) | int, (risk.max_position_size_percent / 100 * 100000 / 2850) | int] | min, 500] | min }} shares</span>
+    </div>
+  </div>
+
+  <!-- MONITORED SYMBOLS -->
+  <div class="bg-bg1 border border-line p-6">
+    <div class="font-display text-[18px] tracking-[0.15em] text-amber mb-4 flex items-center gap-2">
+      <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+      MONITORED SYMBOLS ({{ symbols | length }})
+    </div>
+    <div class="flex flex-wrap gap-2 mb-3">
+      {% for s in symbols %}
+      <span class="text-[11px] tracking-[0.1em] text-amber border border-amber/30 px-3 py-1">{{ s }}</span>
+      {% endfor %}
+    </div>
+    <div class="text-[10px] text-ink-d">
+      Edit <code class="text-amber-h">config/symbol_tokens.yaml</code> to add or remove symbols. Restart required.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
