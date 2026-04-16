@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALGO // REPORTS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        bg:'#080705', bg1:'#0F0D0A', bg2:'#161310',
+        line:'#2C2620', line2:'#3D342C',
+        amber:'#E8A020', 'amber-d':'#9A6A14', 'amber-h':'#FFD166',
+        gain:'#06D6A0', loss:'#EF476F',
+        muted:'#5A5048', ink:'#D4C9BC', 'ink-d':'#7A6E64',
+      },
+      fontFamily: {
+        display:['"Bebas Neue"','sans-serif'],
+        mono:['"IBM Plex Mono"','monospace'],
+      },
+    }
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  .htmx-indicator{display:none}
+  .htmx-request .htmx-indicator{display:block}
+  .tabnum{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body class="bg-bg font-mono text-ink text-[13px] leading-relaxed min-h-screen">
+
+<header class="flex items-center justify-between px-6 h-12 bg-bg1 border-b border-line sticky top-0 z-50">
+  <div class="font-display text-[26px] tracking-[0.12em] text-amber leading-none"
+       style="text-shadow:0 0 20px rgba(232,160,32,0.4)">
+    ALGO <span class="text-muted text-[18px]">//</span> REPORTS
+  </div>
+  <div class="flex items-center gap-4">
+    <a href="/" class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-2 py-1 hover:border-amber/50 hover:text-amber transition-colors uppercase">DASHBOARD</a>
+    <a href="/config" class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-2 py-1 hover:border-amber/50 hover:text-amber transition-colors uppercase">CONFIG</a>
+    <a href="/logout" class="text-[9px] tracking-[0.2em] text-ink-d border border-line2 px-2 py-1 hover:border-loss/50 hover:text-loss transition-colors uppercase">LOGOUT</a>
+  </div>
+</header>
+
+<div class="max-w-5xl mx-auto px-4 py-8 flex gap-6">
+  <!-- DATE SIDEBAR -->
+  <div class="w-44 flex-shrink-0">
+    <div class="bg-bg1 border border-line">
+      <div class="px-4 py-3 border-b border-line font-display text-[14px] tracking-[0.15em] text-amber flex items-center gap-2">
+        <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+        DATES
+      </div>
+      {% if dates %}
+      <div class="flex flex-col">
+        {% for date in dates %}
+        <button class="text-left px-4 py-2.5 text-[11px] tracking-[0.08em] text-ink-d border-b border-line/40
+                       hover:bg-bg2 hover:text-amber transition-colors tabnum"
+                hx-get="/reports/{{ date }}"
+                hx-target="#report-detail"
+                hx-swap="innerHTML"
+                hx-indicator="#report-spinner">
+          {{ date }}
+        </button>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="px-4 py-6 text-[10px] tracking-[0.15em] text-ink-d leading-loose">
+        No reports yet.<br>Auto-generated<br>at 15:35 IST.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- REPORT PANE -->
+  <div class="flex-1 min-w-0">
+    <div id="report-spinner" class="htmx-indicator text-[10px] tracking-[0.2em] text-amber-d animate-pulse mb-2">
+      LOADING...
+    </div>
+    <div id="report-detail" class="bg-bg1 border border-line p-6 text-[11px] text-ink-d">
+      &#8592; Select a date to view the report
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+{% if dates %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    htmx.ajax('GET', '/reports/{{ dates[0] }}', {target:'#report-detail', swap:'innerHTML'});
+  });
+</script>
+{% endif %}
+</body>
+</html>

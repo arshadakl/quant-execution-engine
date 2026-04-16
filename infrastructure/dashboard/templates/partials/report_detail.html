@@ -1,0 +1,68 @@
+<div class="mb-5">
+  <div class="font-display text-[18px] tracking-[0.15em] text-amber mb-1 flex items-center gap-2">
+    <span class="inline-block w-1.5 h-1.5 bg-amber" style="box-shadow:0 0 8px #E8A020"></span>
+    {{ report.date }} &nbsp;·&nbsp; {{ report.mode | upper }}
+  </div>
+  <div class="text-[10px] tracking-[0.12em] text-ink-d">Generated {{ report.generated_at[:16] }}</div>
+</div>
+
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line border border-line mb-5">
+  {% set cards = [
+    ("Total Trades",  report.total_trades,                      ""),
+    ("Closed",        report.closed_trades,                     ""),
+    ("Win Rate",      (report.win_rate * 100) | round(1),       "%"),
+    ("Total P&L",     report.total_pnl,                         "&#8377;"),
+    ("Winners",       report.winning_trades,                    ""),
+    ("Losers",        report.losing_trades,                     ""),
+    ("Avg P&L",       report.avg_pnl,                           "&#8377;"),
+    ("Best Trade",    report.best_trade,                        "&#8377;"),
+  ] %}
+  {% for label, value, unit in cards %}
+  <div class="bg-bg1 px-4 py-3">
+    <div class="text-[9px] tracking-[0.2em] text-ink-d uppercase mb-1">{{ label }}</div>
+    <div class="text-[16px] font-display tracking-wider
+      {% if unit == '&#8377;' %}
+        {% if value > 0 %}text-gain{% elif value < 0 %}text-loss{% else %}text-ink{% endif %}
+      {% elif unit == '%' %}
+        {% if value > 50 %}text-gain{% elif value < 40 %}text-loss{% else %}text-amber{% endif %}
+      {% else %}text-amber{% endif %}">
+      {{ unit }}{{ value }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if report.trades %}
+<div class="overflow-x-auto">
+  <table class="w-full text-[11px] border-collapse">
+    <thead>
+      <tr class="border-b border-line text-ink-d text-[9px] tracking-[0.15em] uppercase">
+        <th class="text-left py-2 pr-4">Symbol</th>
+        <th class="text-left py-2 pr-4">Dir</th>
+        <th class="text-left py-2 pr-4">Strategy</th>
+        <th class="text-right py-2 pr-4">Entry</th>
+        <th class="text-right py-2 pr-4">Exit</th>
+        <th class="text-right py-2">P&L</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in report.trades %}
+      <tr class="border-b border-line/40 hover:bg-bg2">
+        <td class="py-1.5 pr-4 text-ink">{{ t.symbol }}</td>
+        <td class="py-1.5 pr-4 {% if t.direction == 'LONG' %}text-gain{% else %}text-loss{% endif %}">{{ t.direction }}</td>
+        <td class="py-1.5 pr-4 text-amber text-[10px] uppercase">{{ t.strategy }}</td>
+        <td class="text-right py-1.5 pr-4 tabnum">&#8377;{{ t.entry_price | round(2) }}</td>
+        <td class="text-right py-1.5 pr-4 tabnum">
+          {% if t.exit_price %}&#8377;{{ t.exit_price | round(2) }}{% else %}<span class="text-ink-d">OPEN</span>{% endif %}
+        </td>
+        <td class="text-right py-1.5 tabnum {% if t.pnl and t.pnl > 0 %}text-gain{% elif t.pnl and t.pnl < 0 %}text-loss{% else %}text-ink-d{% endif %}">
+          {% if t.pnl is not none %}&#8377;{{ t.pnl | round(2) }}{% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="text-[10px] tracking-[0.15em] text-ink-d py-4">No trades recorded for this date.</div>
+{% endif %}
