@@ -3,6 +3,7 @@ import asyncio
 import logging
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -26,6 +27,8 @@ from core.use_cases.trading_bot import TradingBot
 from strategies.orb import ORBStrategy
 from strategies.vwap_reversion import VWAPReversionStrategy
 from strategies.ema_crossover import EMACrossoverStrategy
+from infrastructure.scheduler.jobs import JobScheduler
+from infrastructure.reports.daily_report import generate_daily_report, save_daily_report
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,6 +43,19 @@ if not DASHBOARD_TOKEN:
 
 DB_PATH = str(Path(__file__).parent.parent / "data" / "paper_trades.db")
 Path(DB_PATH).parent.mkdir(exist_ok=True)
+REPORTS_DIR = str(Path(__file__).parent.parent / "data" / "reports")
+
+
+def _make_daily_report_fn(db_path: str, reports_dir: str, mode: str):
+    def fn():
+        today = datetime.now().strftime("%Y-%m-%d")
+        try:
+            report = generate_daily_report(db_path, today, mode)
+            save_daily_report(report, reports_dir)
+            logger.info("daily report generated for %s", today)
+        except Exception as exc:
+            logger.error("daily report generation failed: %s", exc)
+    return fn
 
 
 async def main() -> None:
@@ -73,6 +89,10 @@ async def main() -> None:
         ORBStrategy(), VWAPReversionStrategy(), EMACrossoverStrategy(),
     ])
 
+    scheduler = JobScheduler()
+    scheduler.register_daily_report_job(_make_daily_report_fn(DB_PATH, REPORTS_DIR, mode))
+    scheduler.start()
+
     bot = TradingBot(
         mode=mode,
         broker=broker,
@@ -98,6 +118,7 @@ async def main() -> None:
         await server.serve()
     finally:
         bot.stop()
+        scheduler.stop()
         loop_task.cancel()
         try:
             await broker.logout()
