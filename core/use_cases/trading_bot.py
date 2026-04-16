@@ -29,6 +29,7 @@ class TradingBot:
         health_monitor: Any,
         state_bridge: StateBridge,
         symbol_tokens: dict[str, str],
+        execution_engine: Any = None,
     ) -> None:
         self.mode = mode
         self.broker = broker
@@ -40,6 +41,7 @@ class TradingBot:
         self.health_monitor = health_monitor
         self.state_bridge = state_bridge
         self.symbol_tokens = symbol_tokens
+        self.execution_engine = execution_engine
         self._risk_state = RiskState()
         self._stop = asyncio.Event()
         state_bridge.set("mode", mode)
@@ -125,8 +127,13 @@ class TradingBot:
                 continue
 
             fill_price = ltp_map.get(signal.symbol, signal.entry_price)
+            if self.mode == "live" and self.execution_engine is not None:
+                token = self.symbol_tokens.get(signal.symbol, "")
+                await self.execution_engine.place_entry(signal, qty, token)
+                await self.execution_engine.place_sl_order(signal, qty, token)
             self.paper_trader.fill(signal, qty, fill_price)
             self._risk_state.last_trade_time = now
+            self._risk_state.daily_trades += 1
             await self.telegram.notify_entry(signal, qty, fill_price)
 
         await self._refresh_position_ltps(ltp_map)

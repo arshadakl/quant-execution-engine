@@ -18,6 +18,7 @@ from infrastructure.dashboard.state_bridge import StateBridge
 from infrastructure.dashboard.web_ui import create_app
 from infrastructure.health_monitor import HealthMonitor
 from adapters.broker.angel_broker import AngelBroker
+from adapters.broker.execution_engine import ExecutionEngine
 from adapters.notifications.telegram_notifier import TelegramNotifier
 from adapters.paper_trader import PaperTrader
 from core.use_cases.strategy_engine import StrategyEngine
@@ -79,6 +80,9 @@ async def main() -> None:
     logger.info("Login OK")
 
     paper_trader = PaperTrader(db_path=DB_PATH, initial_capital=settings.trading.paper_capital)
+    execution_engine = ExecutionEngine(broker) if mode == "live" else None
+    if mode == "live":
+        logger.warning("LIVE MODE ACTIVE — real orders will be placed on Angel One")
     risk_config = settings.risk
     risk_manager = RiskManager(
         max_daily_loss_pct=risk_config.max_daily_loss_percent / 100,
@@ -108,6 +112,7 @@ async def main() -> None:
         health_monitor=health,
         state_bridge=bridge,
         symbol_tokens=get_symbol_tokens(),
+        execution_engine=execution_engine,
     )
 
     app = create_app(

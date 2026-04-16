@@ -169,3 +169,38 @@ async def test_run_loop_stops_on_stop(bot):
     await asyncio.sleep(0.05)
     bot.stop()
     await asyncio.wait_for(task, timeout=2.0)  # must not hang
+
+
+@pytest.mark.asyncio
+async def test_live_mode_calls_execution_engine(bot):
+    """In live mode, place_entry and place_sl_order are called on the execution engine."""
+    from unittest.mock import AsyncMock, MagicMock
+    from adapters.broker.execution_engine import ExecutionEngine
+
+    execution_engine = MagicMock(spec=ExecutionEngine)
+    execution_engine.place_entry = AsyncMock(return_value="ORDER_001")
+    execution_engine.place_sl_order = AsyncMock(return_value="SL_002")
+
+    bot.mode = "live"
+    bot.execution_engine = execution_engine
+
+    await bot._strategy_cycle()
+
+    execution_engine.place_entry.assert_called_once()
+    execution_engine.place_sl_order.assert_called_once()
+    bot.paper_trader.fill.assert_called_once()   # also records locally
+
+
+@pytest.mark.asyncio
+async def test_paper_mode_does_not_call_execution_engine(bot):
+    """In paper mode (default), execution_engine is never called."""
+    from unittest.mock import AsyncMock, MagicMock
+    execution_engine = MagicMock()
+    execution_engine.place_entry = AsyncMock()
+    bot.execution_engine = execution_engine
+    # mode is already "paper" from fixture
+
+    await bot._strategy_cycle()
+
+    execution_engine.place_entry.assert_not_called()
+    bot.paper_trader.fill.assert_called_once()
