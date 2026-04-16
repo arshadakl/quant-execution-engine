@@ -83,8 +83,12 @@ async def main() -> None:
     risk_manager = RiskManager(
         max_daily_loss_pct=risk_config.max_daily_loss_percent / 100,
         max_open_positions=risk_config.max_open_positions,
+        max_daily_trades=risk_config.max_daily_trades,
     )
-    position_sizer = PositionSizer(risk_pct=risk_config.per_trade_risk_percent / 100)
+    position_sizer = PositionSizer(
+        risk_pct=risk_config.per_trade_risk_percent / 100,
+        max_position_size_pct=risk_config.max_position_size_percent / 100,
+    )
     strategy_engine = StrategyEngine(strategies=[
         ORBStrategy(), VWAPReversionStrategy(), EMACrossoverStrategy(),
     ])

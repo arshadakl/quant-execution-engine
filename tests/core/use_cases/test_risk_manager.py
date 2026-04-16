@@ -167,3 +167,22 @@ def test_validate_returns_tuple_of_bool_and_str():
     assert isinstance(result, tuple) and len(result) == 2
     assert type(result[0]) is bool
     assert isinstance(result[1], str)
+
+
+# ─── Max daily trades ───
+
+def test_rejects_when_max_daily_trades_reached():
+    rm = RiskManager(max_daily_trades=5)
+    state = RiskState(daily_trades=5)
+    ok, reason = rm.validate(state=state, capital=100_000.0,
+                             signal_time=datetime(2026, 1, 2, 10, 0))
+    assert ok is False
+    assert "daily trades" in reason.lower()
+
+
+def test_passes_when_below_max_daily_trades():
+    rm = RiskManager(max_daily_trades=5)
+    state = RiskState(daily_trades=4)
+    ok, _ = rm.validate(state=state, capital=100_000.0,
+                        signal_time=datetime(2026, 1, 2, 10, 0))
+    assert ok is True

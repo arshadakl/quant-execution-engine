@@ -11,6 +11,7 @@ class RiskState:
     """Mutable snapshot of current risk exposure."""
     daily_pnl: float = 0.0
     open_positions: int = 0
+    daily_trades: int = 0
     last_trade_time: datetime | None = None
     kill_switch: bool = False
 
@@ -22,12 +23,14 @@ class RiskManager:
         self,
         max_daily_loss_pct: float = 0.03,
         max_open_positions: int = 5,
+        max_daily_trades: int = 10,
         trade_start: time = time(9, 15),
         trade_end: time = time(15, 15),
         cooldown_seconds: int = 300,
     ) -> None:
         self.max_daily_loss_pct = max_daily_loss_pct
         self.max_open_positions = max_open_positions
+        self.max_daily_trades = max_daily_trades
         self.trade_start = trade_start
         self.trade_end = trade_end
         self.cooldown_seconds = cooldown_seconds
@@ -54,6 +57,9 @@ class RiskManager:
 
         if state.open_positions >= self.max_open_positions:
             return False, f"max open positions reached: {state.open_positions}"
+
+        if state.daily_trades >= self.max_daily_trades:
+            return False, f"max daily trades reached: {state.daily_trades}"
 
         if state.last_trade_time is not None:
             elapsed = (signal_time - state.last_trade_time).total_seconds()
