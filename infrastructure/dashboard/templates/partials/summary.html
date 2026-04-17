@@ -1,3 +1,4 @@
+{% if summary %}
 <div class="flex items-center justify-between px-6 py-2.5 flex-wrap gap-y-2">
 
   <div class="flex items-center gap-0 flex-wrap">
@@ -34,9 +35,14 @@
     {% else %}
     <form hx-post="/kill-switch" hx-target="#summary-bar" hx-swap="innerHTML" class="inline">
       <input type="hidden" name="active" value="true">
-      <button type="submit" class="text-[9px] tracking-[0.2em] font-semibold px-3 py-1 border border-loss/60 text-loss bg-loss/10 hover:bg-loss/20 transition-colors uppercase">KILL</button>
+      <button type="submit"
+              hx-confirm="Activate kill switch? All trading will be halted immediately."
+              class="text-[9px] tracking-[0.2em] font-semibold px-3 py-1 border border-loss/60 text-loss bg-loss/10 hover:bg-loss/20 transition-colors uppercase">KILL</button>
     </form>
     {% endif %}
   </div>
 
 </div>
+{% else %}
+<div class="px-6 py-2.5 text-[11px] tracking-[0.2em] text-ink-d">INITIALIZING…</div>
+{% endif %}

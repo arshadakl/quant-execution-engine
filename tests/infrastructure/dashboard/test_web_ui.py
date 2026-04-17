@@ -99,14 +99,17 @@ def test_risk_get_returns_form(client, auth_headers):
 def test_risk_post_updates_params(client, auth_headers):
     resp = client.post(
         "/risk",
-        data={"max_daily_loss_pct": "0.02", "max_open_positions": "3"},
+        data={"max_daily_loss_pct": "3.0", "max_open_positions": "3", "max_daily_trades": "8"},
         headers=auth_headers,
     )
     assert resp.status_code == 200
 
 
 def test_risk_post_requires_auth(client):
-    resp = client.post("/risk", data={"max_daily_loss_pct": "0.02", "max_open_positions": "5"})
+    resp = client.post(
+        "/risk",
+        data={"max_daily_loss_pct": "3.0", "max_open_positions": "5", "max_daily_trades": "10"},
+    )
     assert resp.status_code == 401
 
 

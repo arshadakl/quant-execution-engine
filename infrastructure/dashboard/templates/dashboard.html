@@ -54,6 +54,19 @@ tailwind.config = {
   *{scrollbar-width:thin;scrollbar-color:#3D342C #080705}
   /* Number tabular nums */
   .tabnum{font-variant-numeric:tabular-nums}
+  /* HTMX loading indicator */
+  .htmx-indicator{display:none}
+  .htmx-request .htmx-indicator{display:inline}
+  .htmx-indicator-hide{display:inline}
+  .htmx-request .htmx-indicator-hide{display:none}
+  /* Toast */
+  #toast-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9000;display:flex;flex-direction:column;gap:0.5rem;pointer-events:none}
+  .toast{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:10px 16px;border;pointer-events:auto;
+         opacity:0;transform:translateY(8px);transition:opacity 0.2s,transform 0.2s}
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast-success{background:#0F0D0A;border:1px solid rgba(6,214,160,0.5);color:#06D6A0}
+  .toast-error{background:#0F0D0A;border:1px solid rgba(239,71,111,0.5);color:#EF476F}
+  .toast-info{background:#0F0D0A;border:1px solid rgba(232,160,32,0.4);color:#E8A020}
 </style>
 </head>
 
@@ -194,6 +207,9 @@ tailwind.config = {
 
 </div>
 
+<!-- Toast container -->
+<div id="toast-container"></div>
+
 <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 <script>
 // IST clock
@@ -203,6 +219,26 @@ function tick(){
   document.getElementById('clock').textContent=p(ist.getHours())+':'+p(ist.getMinutes())+':'+p(ist.getSeconds())+' IST';
 }
 tick(); setInterval(tick,1000);
+
+// Toast notification system
+function showToast(message, type='info', duration=3000){
+  const container=document.getElementById('toast-container');
+  const el=document.createElement('div');
+  el.className='toast toast-'+type;
+  el.textContent=message;
+  container.appendChild(el);
+  requestAnimationFrame(()=>{el.classList.add('show')});
+  setTimeout(()=>{
+    el.classList.remove('show');
+    setTimeout(()=>el.remove(),250);
+  },duration);
+}
+
+// Listen for HX-Trigger showToast events
+document.addEventListener('showToast', function(e){
+  const d=e.detail;
+  showToast(d.message, d.type||'info');
+});
 </script>
 </body>
 </html>

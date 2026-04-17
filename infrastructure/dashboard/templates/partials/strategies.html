@@ -1,0 +1,18 @@
+{% if strategies %}
+<div class="py-2">
+  {% for name, enabled in strategies.items() %}
+  <div class="flex items-center justify-between px-4 py-2 border-b border-line">
+    <span class="text-[11px] tracking-[0.2em] text-ink font-medium uppercase">{{ name }}</span>
+    <button
+      class="font-mono text-[10px] tracking-[0.2em] font-semibold border px-3 py-1 cursor-pointer transition-all duration-150 bg-transparent
+             {{ 'text-gain border-gain hover:bg-gain/10' if enabled else 'text-muted border-line2 hover:bg-muted/20' }}"
+      hx-post="/strategy/{{ name }}/toggle"
+      hx-target="#strategy-panel"
+      hx-swap="innerHTML"
+    >{{ "ON" if enabled else "OFF" }}</button>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="py-6 text-center text-ink-d text-[11px] tracking-[0.3em]">-- NO STRATEGIES --</div>
+{% endif %}

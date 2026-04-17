@@ -115,6 +115,13 @@ async def main() -> None:
         execution_engine=execution_engine,
     )
 
+    # Pre-populate bridge with initial risk state so dashboard shows values on first load
+    bridge.set("risk", {
+        "max_daily_loss_pct": risk_manager.max_daily_loss_pct,
+        "max_open_positions": risk_manager.max_open_positions,
+        "max_daily_trades": risk_manager.max_daily_trades,
+    })
+
     app = create_app(
         api_token=DASHBOARD_TOKEN,
         bridge=bridge,

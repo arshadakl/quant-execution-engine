@@ -4,6 +4,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
+from adapters.broker.error_recovery import ErrorRecovery
 from core.entities.signal import Signal
 from core.use_cases.risk_manager import RiskState
 from infrastructure.dashboard.state_bridge import StateBridge
@@ -44,6 +45,7 @@ class TradingBot:
         self.execution_engine = execution_engine
         self._risk_state = RiskState()
         self._stop = asyncio.Event()
+        self._recovery = ErrorRecovery(max_retries=2, base_delay=2.0, max_delay=10.0)
         state_bridge.set("mode", mode)
 
     # ── Public controls ────────────────────────────────────────────────────
@@ -86,7 +88,8 @@ class TradingBot:
 
         for symbol, token in self.symbol_tokens.items():
             try:
-                df = await self.broker.get_historical(
+                df = await self._recovery.retry_async(
+                    self.broker.get_historical,
                     symbol, token, _CANDLE_INTERVAL,
                     now - timedelta(hours=_HISTORY_HOURS), now,
                 )
@@ -97,7 +100,7 @@ class TradingBot:
                 ltp_map[symbol] = float(df["close"].iloc[-1])
             except Exception as exc:
                 logger.error("data/strategy error for %s: %s", symbol, exc)
-            await asyncio.sleep(0.5)  # avoid Angel One rate limit
+            await asyncio.sleep(2.0)  # Angel One rate limit: ~1 req/s historical
 
         self.health_monitor.record_heartbeat("strategy_loop")
         self.state_bridge.set("signals", [

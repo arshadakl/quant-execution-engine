@@ -3,7 +3,7 @@ import logging
 from pathlib import Path
 from typing import TYPE_CHECKING
 from fastapi import FastAPI, Request, Header, HTTPException, Form, Cookie, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from infrastructure.dashboard.state_bridge import StateBridge
 from infrastructure.dashboard.backtest_routes import create_backtest_router
@@ -133,18 +133,27 @@ def create_app(
         request: Request,
         max_daily_loss_pct: float = Form(...),
         max_open_positions: int = Form(...),
+        max_daily_trades: int = Form(...),
         _: None = Depends(_auth),
     ):
-        risk = {"max_daily_loss_pct": max_daily_loss_pct,
-                "max_open_positions": max_open_positions}
+        # UI sends percentage (e.g. 3.0); store as decimal (0.03) internally
+        loss_decimal = max_daily_loss_pct / 100.0
+        risk = {
+            "max_daily_loss_pct": loss_decimal,
+            "max_open_positions": max_open_positions,
+            "max_daily_trades": max_daily_trades,
+        }
         _bridge.set("risk", risk)
         if bot:
-            bot.risk_manager.max_daily_loss_pct = max_daily_loss_pct
+            bot.risk_manager.max_daily_loss_pct = loss_decimal
             bot.risk_manager.max_open_positions = max_open_positions
+            bot.risk_manager.max_daily_trades = max_daily_trades
         logger.info("risk params updated: %s", risk)
-        return templates.TemplateResponse(
+        resp = templates.TemplateResponse(
             request, "partials/risk.html", {"risk": _bridge.get("risk")}
         )
+        resp.headers["HX-Trigger"] = '{"showToast":{"message":"Risk params saved","type":"success"}}'
+        return resp
 
     @app.post("/kill-switch", response_class=HTMLResponse)
     async def kill_switch(request: Request, active: bool = Form(...), _: None = Depends(_auth)):

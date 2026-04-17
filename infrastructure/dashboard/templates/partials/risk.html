@@ -1,0 +1,42 @@
+<form class="flex flex-col gap-3.5 p-4"
+      hx-post="/risk"
+      hx-target="#risk-panel"
+      hx-swap="innerHTML"
+      hx-indicator="#risk-saving">
+
+  <div class="flex flex-col gap-1">
+    <label class="text-[9px] tracking-[0.25em] text-ink-d font-normal uppercase">Max Daily Loss %</label>
+    <input class="font-mono text-[14px] font-semibold bg-bg border border-line2 text-amber-h px-2.5 py-2 w-full
+                  outline-none focus:border-amber transition-colors duration-150
+                  [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+           type="number" name="max_daily_loss_pct"
+           value="{{ ((risk.max_daily_loss_pct * 100)|round(1)) if risk else 3.0 }}"
+           step="0.5" min="0.5" max="10">
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <label class="text-[9px] tracking-[0.25em] text-ink-d font-normal uppercase">Max Open Positions</label>
+    <input class="font-mono text-[14px] font-semibold bg-bg border border-line2 text-amber-h px-2.5 py-2 w-full
+                  outline-none focus:border-amber transition-colors duration-150
+                  [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+           type="number" name="max_open_positions"
+           value="{{ risk.max_open_positions if risk else 5 }}" step="1" min="1" max="20">
+  </div>
+
+  <div class="flex flex-col gap-1">
+    <label class="text-[9px] tracking-[0.25em] text-ink-d font-normal uppercase">Max Daily Trades</label>
+    <input class="font-mono text-[14px] font-semibold bg-bg border border-line2 text-amber-h px-2.5 py-2 w-full
+                  outline-none focus:border-amber transition-colors duration-150
+                  [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+           type="number" name="max_daily_trades"
+           value="{{ risk.max_daily_trades if risk else 10 }}" step="1" min="1" max="50">
+  </div>
+
+  <button type="submit"
+          class="font-mono text-[11px] tracking-[0.25em] font-semibold bg-amber text-bg border-0 py-2.5 mt-1
+                 cursor-pointer transition-all duration-150 hover:bg-amber-h active:scale-[0.98] uppercase
+                 flex items-center justify-center gap-2">
+    <span id="risk-saving" class="htmx-indicator text-[10px]">SAVING…</span>
+    <span class="htmx-indicator-hide">Apply</span>
+  </button>
+</form>
