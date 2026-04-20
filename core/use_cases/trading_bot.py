@@ -137,6 +137,8 @@ class TradingBot:
             self.paper_trader.fill(signal, qty, fill_price)
             self._risk_state.last_trade_time = now
             self._risk_state.daily_trades += 1
+            # update open_positions mid-cycle so subsequent signals see the accurate count
+            self._risk_state.open_positions += 1
             await self.telegram.notify_entry(signal, qty, fill_price)
 
         await self._refresh_position_ltps(ltp_map)
@@ -173,14 +175,19 @@ class TradingBot:
             )
             positions.append({**t, "current_price": ltp, "pnl": pnl, "target_pct": target_pct})
 
-        day_pnl = self.paper_trader.day_pnl()
-        self._risk_state.daily_pnl = day_pnl
+        realized_pnl = self.paper_trader.day_pnl()
+        unrealized_pnl = self.paper_trader.unrealized_pnl(ltp_map)
+        total_pnl = round(realized_pnl + unrealized_pnl, 2)
+        self._risk_state.daily_pnl = realized_pnl  # kill-switch uses realized only
 
         self._risk_state.open_positions = len(positions)
         self.state_bridge.set("positions", positions)
+        self.state_bridge.set("history", self.paper_trader.closed_today())
         self.state_bridge.update_summary(
-            day_pnl=day_pnl,
+            day_pnl=total_pnl,
             capital=self.paper_trader.capital,
             open_count=len(positions),
         )
+        # record broker heartbeat after a successful data cycle
+        self.health_monitor.record_heartbeat("broker")
         self.state_bridge.update_health(self.health_monitor)

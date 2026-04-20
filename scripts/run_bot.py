@@ -30,6 +30,7 @@ from strategies.vwap_reversion import VWAPReversionStrategy
 from strategies.ema_crossover import EMACrossoverStrategy
 from infrastructure.scheduler.jobs import JobScheduler
 from infrastructure.reports.daily_report import generate_daily_report, save_daily_report
+from core.use_cases.square_off_manager import SquareOffManager
 
 logging.basicConfig(
     level=logging.INFO,
@@ -97,7 +98,19 @@ async def main() -> None:
         ORBStrategy(), VWAPReversionStrategy(), EMACrossoverStrategy(),
     ])
 
+    square_off_mgr = SquareOffManager()
+
+    def _do_square_off():
+        now = datetime.now()
+        bridge_positions = bridge.get("positions") or []
+        ltp_map = {p["symbol"]: p.get("current_price", p["entry_price"]) for p in bridge_positions}
+        closed = square_off_mgr.close_all(paper_trader, ltp_map, now)
+        logger.info("square-off complete: %d positions closed", closed)
+        # refresh history in bridge immediately after close
+        bridge.set("history", paper_trader.closed_today())
+
     scheduler = JobScheduler()
+    scheduler.register_square_off_job(_do_square_off)
     scheduler.register_daily_report_job(_make_daily_report_fn(DB_PATH, REPORTS_DIR, mode))
     scheduler.start()
 

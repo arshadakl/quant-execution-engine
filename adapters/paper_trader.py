@@ -86,3 +86,23 @@ class PaperTrader:
                 "SELECT * FROM trades WHERE exit_price IS NULL"
             ).fetchall()
         return [dict(r) for r in rows]
+
+    def closed_today(self) -> list[dict]:
+        """Return closed trades whose exit_time is today (for trade history panel)."""
+        today = datetime.now().date().isoformat()
+        with sqlite3.connect(self._db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            rows = conn.execute(
+                "SELECT * FROM trades WHERE exit_price IS NOT NULL AND exit_time LIKE ? ORDER BY exit_time DESC",
+                (f"{today}%",),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def unrealized_pnl(self, ltp_map: dict[str, float]) -> float:
+        """Sum of mark-to-market P&L for all open positions."""
+        total = 0.0
+        for t in self.open_trades():
+            ltp = ltp_map.get(t["symbol"], t["entry_price"])
+            mult = 1 if t["direction"] == "LONG" else -1
+            total += mult * (ltp - t["entry_price"]) * t["qty"]
+        return round(total, 2)
