@@ -51,6 +51,8 @@ def bot(tmp_path):
     paper_trader.fill = MagicMock(return_value=1)
     paper_trader.day_pnl = MagicMock(return_value=500.0)
     paper_trader.open_trades = MagicMock(return_value=[])
+    paper_trader.closed_today = MagicMock(return_value=[])
+    paper_trader.unrealized_pnl = MagicMock(return_value=0.0)
     paper_trader.capital = 100_000.0
 
     telegram = MagicMock()
@@ -61,7 +63,7 @@ def bot(tmp_path):
     health.record_heartbeat = MagicMock()
     health.system_status = MagicMock(return_value={})
 
-    return TradingBot(
+    b = TradingBot(
         mode="paper",
         broker=broker,
         strategy_engine=strategy_engine,
@@ -73,6 +75,8 @@ def bot(tmp_path):
         state_bridge=bridge,
         symbol_tokens={"RELIANCE-EQ": "2885"},
     )
+    b._symbol_delay = 0  # no sleep in tests
+    return b
 
 
 @pytest.mark.asyncio

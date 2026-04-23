@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import math
+import random
 from typing import Any, Callable, Coroutine
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,8 @@ class ErrorRecovery:
                 if attempt == self.max_retries:
                     logger.error("retry exhausted after %d attempts: %s", attempt, exc)
                     break
-                delay = min(self.base_delay * (2 ** (attempt - 1)), self.max_delay)
+                base = self.base_delay * (2 ** (attempt - 1))
+                delay = min(base + random.uniform(0, base * 0.3), self.max_delay)
                 logger.warning("attempt %d/%d failed (%s) — retrying in %.1fs",
                                attempt, self.max_retries, exc, delay)
                 await asyncio.sleep(delay)

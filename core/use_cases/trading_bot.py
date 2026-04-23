@@ -12,7 +12,7 @@ from infrastructure.dashboard.state_bridge import StateBridge
 logger = logging.getLogger(__name__)
 
 _CANDLE_INTERVAL = "5m"
-_HISTORY_HOURS = 6  # fetch last 6h of candles for strategy analysis
+_HISTORY_HOURS = 2  # 2h sufficient for all strategies; cuts API payload
 
 
 class TradingBot:
@@ -45,7 +45,8 @@ class TradingBot:
         self.execution_engine = execution_engine
         self._risk_state = RiskState()
         self._stop = asyncio.Event()
-        self._recovery = ErrorRecovery(max_retries=2, base_delay=2.0, max_delay=10.0)
+        self._recovery = ErrorRecovery(max_retries=3, base_delay=3.0, max_delay=15.0)
+        self._symbol_delay: float = 3.5  # inter-symbol sleep; override in tests
         state_bridge.set("mode", mode)
 
     # ── Public controls ────────────────────────────────────────────────────
@@ -100,7 +101,7 @@ class TradingBot:
                 ltp_map[symbol] = float(df["close"].iloc[-1])
             except Exception as exc:
                 logger.error("data/strategy error for %s: %s", symbol, exc)
-            await asyncio.sleep(2.0)  # Angel One rate limit: ~1 req/s historical
+            await asyncio.sleep(self._symbol_delay)  # Angel One historical: ~0.3 req/s
 
         self.health_monitor.record_heartbeat("strategy_loop")
         self.state_bridge.set("signals", [
